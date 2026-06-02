@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦄 Einhorn Mathe-Zauber</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #ff6eb4;
+    --purple: #a855f7;
+    --lavender: #c084fc;
+    --gold: #fbbf24;
+    --mint: #34d399;
+    --sky: #60a5fa;
+    --bg: #1a0a2e;
+    --card: #2d1558;
+    --card2: #3d1f6e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Baloo 2', cursive;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: white;
+  }
+
+  /* Animated starfield */
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--d) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.1; transform: scale(0.8); }
+    to   { opacity: 1;   transform: scale(1.2); }
+  }
+
+  /* Rainbow gradient header */
+  header {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 28px 20px 16px;
+  }
+  header h1 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    background: linear-gradient(135deg, #ff6eb4, #c084fc, #60a5fa, #34d399, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(168,85,247,0.6));
+    letter-spacing: -1px;
+  }
+  header p {
+    color: var(--lavender);
+    font-size: 1.1rem;
+    margin-top: 4px;
+  }
+
+  /* HUD bar */
+  .hud {
+    position: relative; z-index: 10;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 0 20px 16px;
+  }
+  .hud-card {
+    background: var(--card);
+    border: 2px solid rgba(168,85,247,0.4);
+    border-radius: 16px;
+    padding: 10px 22px;
+    text-align: center;
+    min-width: 100px;
+    box-shadow: 0 0 20px rgba(168,85,247,0.2);
+  }
+  .hud-card .label { font-size: 0.75rem; color: var(--lavender); text-transform: uppercase; letter-spacing: 1px; }
+  .hud-card .value { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.8rem; color: var(--gold); }
+
+  /* Stars display */
+  .stars-display {
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  /* Main game area */
+  .game-area {
+    position: relative; z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px 40px;
+    gap: 24px;
+  }
+
+  /* Unicorn character */
+  .unicorn-wrap {
+    position: relative;
+    width: 160px; height: 160px;
+    filter: drop-shadow(0 0 30px rgba(255,110,180,0.5));
+    animation: float 3s ease-in-out infinite;
+    cursor: default;
+    user-select: none;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+  }
+  .unicorn-wrap svg { width: 100%; height: 100%; }
+
+  /* Speech bubble */
+  .bubble {
+    background: white;
+    color: #1a0a2e;
+    border-radius: 20px;
+    padding: 12px 20px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    max-width: 320px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-bottom-color: white;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* Task card */
+  .task-card {
+    background: linear-gradient(135deg, var(--card), var(--card2));
+    border: 2px solid rgba(192,132,252,0.5);
+    border-radius: 28px;
+    padding: 32px 40px;
+    text-align: center;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 0 40px rgba(168,85,247,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .task-type-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    border-radius: 999px;
+    padding: 4px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .equation {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(3rem, 12vw, 5rem);
+    color: white;
+    letter-spacing: 4px;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(255,110,180,0.4);
+  }
+  .equation .op-plus  { color: var(--mint); }
+  .equation .op-minus { color: var(--sky); }
+  .equation .blank {
+    display: inline-block;
+    min-width: 70px;
+    border-bottom: 5px solid var(--gold);
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  /* Answer buttons */
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .ans-btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 2rem;
+    padding: 18px 10px;
+    border: 3px solid rgba(192,132,252,0.4);
+    border-radius: 20px;
+    background: var(--card);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ans-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+    border-radius: inherit;
+  }
+  .ans-btn:hover {
+    transform: scale(1.07) translateY(-3px);
+    background: var(--card2);
+    border-color: var(--lavender);
+    box-shadow: 0 8px 24px rgba(168,85,247,0.4);
+  }
+  .ans-btn:active { transform: scale(0.97); }
+  .ans-btn.correct {
+    background: linear-gradient(135deg, #065f46, #059669);
+    border-color: var(--mint);
+    box-shadow: 0 0 30px rgba(52,211,153,0.5);
+    animation: correctPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .ans-btn.wrong {
+    background: linear-gradient(135deg, #7f1d1d, #dc2626);
+    border-color: #f87171;
+    animation: shake 0.4s ease;
+  }
+  @keyframes correctPop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60% { transform: translateX(-8px); }
+    40%,80% { transform: translateX(8px); }
+  }
+
+  /* Confetti particles */
+  .confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+  .confetti-p {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    animation: fall var(--fd) ease-in var(--fdelay) forwards;
+    opacity: 0;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg) scale(0.4); opacity: 0; }
+  }
+
+  /* Level up overlay */
+  .levelup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,3,24,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    gap: 16px;
+  }
+  .levelup-overlay.show { opacity: 1; pointer-events: all; }
+  .levelup-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.5rem, 10vw, 5rem);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    animation: pulseGold 1s ease-in-out infinite alternate;
+    text-align: center;
+  }
+  @keyframes pulseGold {
+    from { filter: drop-shadow(0 0 10px #f59e0b); }
+    to   { filter: drop-shadow(0 0 40px #fbbf24); }
+  }
+  .levelup-sub {
+    font-size: 1.3rem;
+    color: var(--lavender);
+    text-align: center;
+    padding: 0 20px;
+  }
+  .levelup-btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.3rem;
+    padding: 16px 48px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(255,110,180,0.5);
+    transition: transform 0.15s;
+    margin-top: 8px;
+  }
+  .levelup-btn:hover { transform: scale(1.06); }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    width: 100%;
+    max-width: 420px;
+    height: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--pink), var(--purple), var(--sky));
+    transition: width 0.5s cubic-bezier(0.34,1.2,0.64,1);
+    box-shadow: 0 0 10px rgba(168,85,247,0.6);
+  }
+
+  /* Streak indicator */
+  .streak {
+    font-size: 1rem;
+    color: var(--gold);
+    font-weight: 700;
+    min-height: 24px;
+    transition: opacity 0.3s;
+  }
+
+  /* Mode toggle */
+  .mode-wrap {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mode-btn {
+    font-family: 'Baloo 2', cursive;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 18px;
+    border: 2px solid rgba(192,132,252,0.3);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--lavender);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active, .mode-btn:hover {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    border-color: transparent;
+    color: white;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .task-card { padding: 24px 20px; }
+    .ans-btn { font-size: 1.6rem; padding: 14px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="confetti-wrap" id="confetti"></div>
+
+<div class="levelup-overlay" id="levelupOverlay">
+  <div style="font-size:6rem;animation:float 1s ease-in-out infinite">🦄</div>
+  <div class="levelup-title" id="levelupTitle">🌟 Super!</div>
+  <div class="levelup-sub" id="levelupSub">Du bist ein Mathe-Einhorn!</div>
+  <button class="levelup-btn" id="levelupBtn">Weiter ✨</button>
+</div>
+
+<header>
+  <h1>🦄 Einhorn Mathe-Zauber</h1>
+  <p>Rechne richtig und hilf dem Einhorn fliegen!</p>
+</header>
+
+<div class="hud">
+  <div class="hud-card">
+    <div class="label">Punkte</div>
+    <div class="value" id="score">0</div>
+  </div>
+  <div class="hud-card">
+    <div class="label">Level</div>
+    <div class="value" id="level">1</div>
+  </div>
+  <div class="hud-card">
+    <div class="label">Sterne</div>
+    <div class="stars-display" id="starDisplay">☆☆☆☆☆</div>
+  </div>
+</div>
+
+<div class="game-area">
+
+  <div class="mode-wrap">
+    <button class="mode-btn active" id="modeAll"   onclick="setMode('all')">➕➖ Beides</button>
+    <button class="mode-btn"        id="modePlus"  onclick="setMode('plus')">➕ Addition</button>
+    <button class="mode-btn"        id="modeMinus" onclick="setMode('minus')">➖ Subtraktion</button>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <div class="streak" id="streak"></div>
+
+  <div class="unicorn-wrap" id="unicorn">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Body -->
+      <ellipse cx="100" cy="135" rx="55" ry="42" fill="#f5d0fe"/>
+      <!-- Head -->
+      <ellipse cx="148" cy="95" rx="32" ry="28" fill="#f5d0fe"/>
+      <!-- Mane -->
+      <path d="M120 72 Q110 60 115 45 Q118 35 125 40 Q122 55 130 65 Q138 55 135 40 Q142 35 145 45 Q142 58 148 68" fill="none" stroke="#a855f7" stroke-width="7" stroke-linecap="round"/>
+      <path d="M120 72 Q110 60 115 45 Q118 35 125 40 Q122 55 130 65 Q138 55 135 40 Q142 35 145 45 Q142 58 148 68" fill="none" stroke="#ec4899" stroke-width="4" stroke-linecap="round" stroke-dasharray="4 4"/>
+      <!-- Horn -->
+      <polygon points="162,55 155,75 169,75" fill="#fbbf24"/>
+      <line x1="162" y1="57" x2="162" y2="74" stroke="#f59e0b" stroke-width="1.5"/>
+      <!-- Ear -->
+      <polygon points="128,72 122,55 136,58" fill="#f9a8d4"/>
+      <!-- Eye -->
+      <circle cx="158" cy="92" r="6" fill="#1a0a2e"/>
+      <circle cx="160" cy="90" r="2" fill="white"/>
+      <!-- Nostril -->
+      <ellipse cx="172" cy="108" rx="4" ry="3" fill="#e879f9" opacity="0.6"/>
+      <!-- Smile -->
+      <path d="M165 112 Q170 118 176 112" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Tail -->
+      <path d="M45 130 Q20 115 25 95 Q28 80 38 90 Q32 105 45 118 Q55 100 48 82 Q55 70 62 82 Q55 100 65 120" fill="none" stroke="#c084fc" stroke-width="8" stroke-linecap="round"/>
+      <path d="M45 130 Q20 115 25 95 Q28 80 38 90 Q32 105 45 118 Q55 100 48 82 Q55 70 62 82 Q55 100 65 120" fill="none" stroke="#f9a8d4" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 5"/>
+      <!-- Legs -->
+      <rect x="75" y="168" width="14" height="28" rx="7" fill="#e9d5ff"/>
+      <rect x="95" y="170" width="14" height="26" rx="7" fill="#e9d5ff"/>
+      <rect x="115" y="168" width="14" height="28" rx="7" fill="#e9d5ff"/>
+      <rect x="135" y="165" width="14" height="26" rx="7" fill="#e9d5ff"/>
+      <!-- Hooves -->
+      <rect x="74" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>
+      <rect x="94" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>
+      <rect x="114" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>
+      <rect x="134" y="187" width="15" height="7" rx="3.5" fill="#a855f7"/>
+      <!-- Wing -->
+      <path d="M70 120 Q40 95 50 70 Q58 80 60 100 Q75 85 80 60 Q88 75 80 105" fill="#ddd6fe" opacity="0.8"/>
+      <path d="M70 120 Q40 95 50 70 Q58 80 60 100" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.6"/>
+      <!-- Cutie mark: star -->
+      <path d="M108 148 l4 8 l9 0 l-7 5 l3 8 l-8-5 l-8 5 l3-8 l-7-5 l9 0 z" fill="#fbbf24" opacity="0.8"/>
+      <!-- Blush -->
+      <ellipse cx="167" cy="103" rx="8" ry="5" fill="#f9a8d4" opacity="0.5"/>
+    </svg>
+  </div>
+
+  <div class="bubble" id="bubble">Was ist das Ergebnis? 🌟</div>
+
+  <div class="task-card">
+    <div class="task-type-badge" id="taskBadge">Addition ➕</div>
+    <div class="equation" id="equation">? <span class="op-plus">+</span> ? <span style="color:var(--lavender)">=</span> <span class="blank" id="blank">?</span></div>
+  </div>
+
+  <div class="answers" id="answers"></div>
+
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────
+let score = 0, level = 1, stars = 0, streak = 0, answered = false;
+let mode = 'all'; // 'all' | 'plus' | 'minus'
+const QUESTIONS_PER_LEVEL = 8;
+let questionInLevel = 0;
+let currentAnswer = null;
+
+// Bubble messages
+const correctMsgs = [
+  "Toll gemacht! 🌟","Super! Du bist ein Mathe-Einhorn! 🦄","Wunderbar! ✨",
+  "Ja! Das Einhorn tanzt! 🎉","Richtig! Du bist so schlau! 🌈",
+  "Fantastisch! Magie! ✨","Wow, einfach wow! 🦄💫","Mega! Weiter so! 🌟"
+];
+const wrongMsgs = [
+  "Fast! Versuch's nochmal 💪","Ups! Das Einhorn glaubt an dich! 🦄",
+  "Nicht ganz, aber du schaffst das! ✨","Nochmal! Du bist mutig! 🌈"
+];
+const thinkMsgs = [
+  "Was ist das Ergebnis? 🌟","Hmmm, weißt du es? 🦄","Zeig dem Einhorn deine Magie! ✨",
+  "Denk nach… du schaffst das! 💫","Welche Zahl ist es? 🌈"
+];
+
+// ─── Level config ─────────────────────────────────────────────────────────
+function maxForLevel(l) {
+  if (l <= 2) return 10;
+  if (l <= 4) return 15;
+  return 20;
+}
+
+// ─── Mode ─────────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  ['All','Plus','Minus'].forEach(x => {
+    document.getElementById('mode'+x).classList.toggle('active', m === x.toLowerCase());
+  });
+  nextQuestion();
+}
+
+// ─── Generate question ────────────────────────────────────────────────────
+function generateQuestion() {
+  const max = maxForLevel(level);
+  let a, b, op;
+
+  if (mode === 'plus') op = '+';
+  else if (mode === 'minus') op = '-';
+  else op = Math.random() < 0.5 ? '+' : '-';
+
+  if (op === '+') {
+    a = Math.floor(Math.random() * (max - 1)) + 1;
+    b = Math.floor(Math.random() * (max - a)) + 1;
+    if (a + b > max) b = max - a;
+  } else {
+    a = Math.floor(Math.random() * (max - 2)) + 2;
+    b = Math.floor(Math.random() * (a - 1)) + 1;
+  }
+
+  const result = op === '+' ? a + b : a - b;
+  return { a, b, op, result };
+}
+
+function generateChoices(correct, max) {
+  const choices = new Set([correct]);
+  const tries = new Set([correct]);
+  while (choices.size < 4) {
+    let delta = Math.floor(Math.random() * 4) + 1;
+    if (Math.random() < 0.5) delta = -delta;
+    let c = correct + delta;
+    if (c < 0) c = correct + Math.abs(delta);
+    if (c > max) c = correct - Math.abs(delta);
+    if (c < 0) continue;
+    if (!tries.has(c)) { tries.add(c); choices.add(c); }
+  }
+  return shuffle([...choices]);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ─── Render question ──────────────────────────────────────────────────────
+function nextQuestion() {
+  answered = false;
+  const q = generateQuestion();
+  currentAnswer = q.result;
+
+  // Equation
+  const opSpan = q.op === '+'
+    ? `<span class="op-plus">+</span>`
+    : `<span class="op-minus">−</span>`;
+  document.getElementById('equation').innerHTML =
+    `${q.a} ${opSpan} ${q.b} <span style="color:var(--lavender)">=</span> <span class="blank" id="blank">?</span>`;
+
+  document.getElementById('taskBadge').textContent =
+    q.op === '+' ? 'Addition ➕' : 'Subtraktion ➖';
+
+  // Bubble
+  setBubble(thinkMsgs[Math.floor(Math.random() * thinkMsgs.length)]);
+
+  // Choices
+  const max = maxForLevel(level);
+  const choices = generateChoices(q.result, max);
+  const container = document.getElementById('answers');
+  container.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = c;
+    btn.onclick = () => handleAnswer(c, btn);
+    container.appendChild(btn);
+  });
+
+  // Progress
+  document.getElementById('progressBar').style.width =
+    (questionInLevel / QUESTIONS_PER_LEVEL * 100) + '%';
+}
+
+function setBubble(msg) {
+  const el = document.getElementById('bubble');
+  el.style.animation = 'none';
+  el.textContent = msg;
+  requestAnimationFrame(() => { el.style.animation = 'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)'; });
+}
+
+// ─── Handle answer ────────────────────────────────────────────────────────
+function handleAnswer(val, btn) {
+  if (answered) return;
+  answered = true;
+
+  if (val === currentAnswer) {
+    // Correct
+    streak++;
+    score += 10 + (streak > 1 ? streak * 2 : 0);
+    questionInLevel++;
+
+    btn.classList.add('correct');
+    setBubble(correctMsgs[Math.floor(Math.random() * correctMsgs.length)]);
+    animateUnicorn('happy');
+    spawnConfetti();
+
+    // Stars (every 3 correct in a row)
+    if (streak % 3 === 0 && stars < 5) {
+      stars = Math.min(5, stars + 1);
+    }
+
+    document.getElementById('score').textContent = score;
+    document.getElementById('starDisplay').textContent =
+      '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+    updateStreak();
+
+    if (questionInLevel >= QUESTIONS_PER_LEVEL) {
+      // Level up!
+      setTimeout(showLevelUp, 700);
+    } else {
+      setTimeout(nextQuestion, 900);
+    }
+  } else {
+    // Wrong
+    streak = 0;
+    btn.classList.add('wrong');
+    setBubble(wrongMsgs[Math.floor(Math.random() * wrongMsgs.length)]);
+    animateUnicorn('sad');
+    updateStreak();
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      answered = false;
+    }, 600);
+  }
+}
+
+function updateStreak() {
+  const el = document.getElementById('streak');
+  if (streak >= 3) {
+    el.textContent = `🔥 ${streak}x Streak! +${streak * 2} Bonus!`;
+    el.style.opacity = '1';
+  } else if (streak > 0) {
+    el.textContent = `✨ ${streak} richtig!`;
+    el.style.opacity = '1';
+  } else {
+    el.textContent = '';
+    el.style.opacity = '0';
+  }
+}
+
+// ─── Level up ─────────────────────────────────────────────────────────────
+function showLevelUp() {
+  level++;
+  questionInLevel = 0;
+  document.getElementById('level').textContent = level;
+  document.getElementById('progressBar').style.width = '0%';
+
+  const msgs = [
+    ['🌟 Level ' + level + '!', 'Das Einhorn bekommt neue Flügel! 🦄✨'],
+    ['🎉 Wow!', 'Du rechnest wie eine Zauberin! 🔮'],
+    ['⭐ Magie!', 'Das Einhorn ist so stolz auf dich! 💜'],
+    ['🦄 Fantastisch!', 'Weiter so, Mathe-Star! 🌈'],
+  ];
+  const m = msgs[Math.min(level - 2, msgs.length - 1)];
+  document.getElementById('levelupTitle').textContent = m[0];
+  document.getElementById('levelupSub').textContent = m[1];
+
+  document.getElementById('levelupOverlay').classList.add('show');
+  spawnConfetti(80);
+}
+
+document.getElementById('levelupBtn').onclick = () => {
+  document.getElementById('levelupOverlay').classList.remove('show');
+  nextQuestion();
+};
+
+// ─── Unicorn animation ────────────────────────────────────────────────────
+function animateUnicorn(mood) {
+  const u = document.getElementById('unicorn');
+  u.style.animation = 'none';
+  if (mood === 'happy') {
+    u.style.filter = 'drop-shadow(0 0 40px rgba(251,191,36,0.8))';
+    setTimeout(() => { u.style.filter = 'drop-shadow(0 0 30px rgba(255,110,180,0.5))'; u.style.animation = 'float 3s ease-in-out infinite'; }, 600);
+  } else {
+    u.style.filter = 'drop-shadow(0 0 20px rgba(239,68,68,0.5))';
+    setTimeout(() => { u.style.filter = 'drop-shadow(0 0 30px rgba(255,110,180,0.5))'; u.style.animation = 'float 3s ease-in-out infinite'; }, 600);
+  }
+  requestAnimationFrame(() => { u.style.animation = mood === 'happy' ? 'correctPop 0.4s cubic-bezier(0.34,1.56,0.64,1)' : 'shake 0.4s ease'; });
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────
+const confettiColors = ['#ff6eb4','#a855f7','#fbbf24','#34d399','#60a5fa','#f9a8d4','#c084fc'];
+function spawnConfetti(n = 35) {
+  const wrap = document.getElementById('confetti');
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-p';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*20 - 5}%;
+      background:${confettiColors[Math.floor(Math.random()*confettiColors.length)]};
+      width:${6+Math.random()*10}px;
+      height:${6+Math.random()*10}px;
+      border-radius:${Math.random()<0.5?'50%':'3px'};
+      --fd:${0.8+Math.random()*1.4}s;
+      --fdelay:${Math.random()*0.5}s;
+    `;
+    wrap.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+}
+
+// ─── Starfield ────────────────────────────────────────────────────────────
+(function() {
+  const s = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'star';
+    const size = 1 + Math.random() * 3;
+    el.style.cssText = `
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      width:${size}px; height:${size}px;
+      --d:${1.5+Math.random()*3}s;
+      animation-delay:${Math.random()*3}s;
+    `;
+    s.appendChild(el);
+  }
+})();
+
+// ─── Start ────────────────────────────────────────────────────────────────
+nextQuestion();
+</script>
+</body>
+</html>
