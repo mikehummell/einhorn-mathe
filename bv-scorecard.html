@@ -7,32 +7,22 @@
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0f1117;
-    --bg2: #171b26;
-    --bg3: #1e2330;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #e8eaf0;
-    --muted: #7a8099;
-    --accent: #4f7cff;
-    --accent-dim: rgba(79,124,255,0.15);
-    --green: #3ddc84;
-    --green-dim: rgba(61,220,132,0.12);
-    --amber: #f5a623;
-    --amber-dim: rgba(245,166,35,0.12);
-    --red: #ff5c5c;
-    --red-dim: rgba(255,92,92,0.12);
-    --purple: #a78bfa;
-    --purple-dim: rgba(167,139,250,0.15);
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-    --r: 6px;
-    --r2: 10px;
+    --bg: #0f1117; --bg2: #171b26; --bg3: #1e2330;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0; --muted: #7a8099;
+    --accent: #4f7cff; --accent-dim: rgba(79,124,255,0.15);
+    --green: #3ddc84; --green-dim: rgba(61,220,132,0.12);
+    --amber: #f5a623; --amber-dim: rgba(245,166,35,0.12);
+    --red: #ff5c5c; --red-dim: rgba(255,92,92,0.12);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.15);
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+    --r: 6px; --r2: 10px;
   }
   html { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; }
   body { min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem 4rem; }
@@ -41,40 +31,56 @@
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; cursor: pointer; transition: transform 0.1s; }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useCallback } = React;
+const { useState, useCallback, useRef } = React;
 
 const CRITERIA = [
-  { id:'umsatz', name:'Umsatzpotenzial', hint:'Umsatz, Neukunden, Upselling, ARPU',
+  { id:'umsatz',   name:'Umsatzpotenzial',                       hint:'Umsatz, Neukunden, Upselling, ARPU',
     opts:['ohne','gering\n<50 kCHF/J','relevant\n50–250 kCHF/J','hoch\n>250 kCHF/J'] },
-  { id:'nutzen', name:'Kundennutzen', hint:'UX, NPS',
+  { id:'nutzen',   name:'Kundennutzen',                           hint:'UX, NPS',
     opts:['nicht messbar','kleine Zielgruppe','relevant für Kernkunden','marktprägend'] },
-  { id:'churn', name:'Churnreduktion', hint:'Kundenbindung',
+  { id:'churn',    name:'Churnreduktion',                         hint:'Kundenbindung',
     opts:['keine','kleiner Effekt','messbar','hoher Effekt'] },
-  { id:'kosten', name:'Kostenreduktion / Effizienz', hint:'Automatisierung',
+  { id:'kosten',   name:'Kostenreduktion / Effizienz',            hint:'Automatisierung',
     opts:['keine','kleine Vereinfachung','messbare Entlastung','deutliche OPEX-Reduktion'] },
-  { id:'risiko', name:'Risiko minimieren / Chancen eröffnen', hint:'Enabler',
+  { id:'risiko',   name:'Risiko minimieren / Chancen eröffnen',   hint:'Enabler',
     opts:['keine','mitigiert','signifikant gesenkt, klarer Mehrwert','Risiko eliminiert, USP'] },
-  { id:'strategie', name:'Strategische Relevanz', hint:'Marktposition, Plattform, Infrastruktur, Zukunftsfähigkeit',
+  { id:'strategie',name:'Strategische Relevanz',                  hint:'Marktposition, Plattform, Infrastruktur, Zukunftsfähigkeit',
     opts:['keine','klein','wichtig','strategisch kritisch'] },
 ];
 const PTS = [0, 1, 3, 5];
+const TSHIRTS = [
+  { val:'S', label:'S', range:'1–15 PT' },
+  { val:'M', label:'M', range:'10–50 PT' },
+  { val:'L', label:'L', range:'45–90 PT' },
+  { val:'XL', label:'XL', range:'>90 PT' },
+];
+const CONF_LEVELS = [
+  { val:'Niedrig', sub:'Hypothese / wenig Daten', color:'var(--red)',    bg:'var(--red-dim)' },
+  { val:'Mittel',  sub:'Plausible Annahmen',       color:'var(--amber)',  bg:'var(--amber-dim)' },
+  { val:'Hoch',    sub:'Datenbasiert validiert',   color:'var(--green)',  bg:'var(--green-dim)' },
+];
 
 function getPrio(score) {
-  if (score < 8)  return { label:'Geringe Prio',      color:'var(--muted)',   bg:'rgba(122,128,153,0.12)' };
-  if (score <= 13) return { label:'Relevant',          color:'var(--accent)',  bg:'var(--accent-dim)' };
-  if (score <= 21) return { label:'Hohe Prio',         color:'var(--green)',   bg:'var(--green-dim)' };
-  return              { label:'Strategisch / Top-Prio',color:'var(--purple)',  bg:'var(--purple-dim)' };
+  if (score < 8)   return { label:'Geringe Prio',       color:'var(--muted)',  bg:'rgba(122,128,153,0.12)', hex:'#7a8099' };
+  if (score <= 13) return { label:'Relevant',            color:'var(--accent)', bg:'var(--accent-dim)',      hex:'#4f7cff' };
+  if (score <= 21) return { label:'Hohe Prio',           color:'var(--green)',  bg:'var(--green-dim)',       hex:'#3ddc84' };
+  return               { label:'Strategisch / Top-Prio', color:'var(--purple)', bg:'var(--purple-dim)',      hex:'#a78bfa' };
 }
 
-function buildExport({ featureName, gate, scores, aufwand, confidence, kpi }) {
+function buildExport({ featureName, gate, scores, aufwand, confIdx, kpi }) {
   const total = Object.values(scores).reduce((a,b)=>a+b,0);
   const prio = getPrio(total);
   const today = new Date().toLocaleDateString('de-CH');
+  const confLabel = confIdx >= 0 ? `${CONF_LEVELS[confIdx].val} — ${CONF_LEVELS[confIdx].sub}` : '—';
+  const aufwandLabel = aufwand ? `${aufwand} (${TSHIRTS.find(t=>t.val===aufwand)?.range || ''})` : '—';
   const lines = [];
   lines.push(`## Business Value Scorecard — ${featureName || '(Feature ohne Name)'}`);
   lines.push(`**Datum:** ${today}`);
@@ -84,7 +90,7 @@ function buildExport({ featureName, gate, scores, aufwand, confidence, kpi }) {
     ? '> ✅ **MUSS-Feature** — regulatorisch / security-kritisch / Audit Finding / Betriebsrisiko kritisch'
     : '> Kein Pflicht-Feature — Bewertung nach Kriterien');
   lines.push('');
-  lines.push('### Kriterien-Bewertung');
+  lines.push('### Geschäftswert');
   lines.push('');
   lines.push('| Kriterium | Score | Einstufung |');
   lines.push('|---|---|---|');
@@ -92,288 +98,338 @@ function buildExport({ featureName, gate, scores, aufwand, confidence, kpi }) {
     const s = scores[cr.id] ?? null;
     if (s === null) { lines.push(`| ${cr.name} | — | nicht bewertet |`); return; }
     const idx = PTS.indexOf(s);
-    const lbl = cr.opts[idx]?.replace(/\n/g,' ') ?? '—';
-    lines.push(`| ${cr.name} | **${s}** | ${lbl} |`);
+    lines.push(`| ${cr.name} | **${s}** | ${cr.opts[idx]?.replace(/\n/g,' ') ?? '—'} |`);
   });
   lines.push('');
-  lines.push(`### Gesamtscore: ${total} / 30`);
-  lines.push(`**Priorität: ${prio.label}**`);
+  lines.push(`**Erwartbarer KPI:** ${kpi || '—'}`);
   lines.push('');
-  lines.push('### Weitere Angaben');
-  lines.push(`- **Aufwand:** ${aufwand || '—'}`);
-  lines.push(`- **Confidence:** ${confidence || '—'}`);
-  lines.push(`- **Erwartbarer KPI:** ${kpi || '—'}`);
+  lines.push(`### Gesamtscore: ${total} / 30 — ${prio.label}`);
+  lines.push('');
+  lines.push('### Aufwand');
+  lines.push(`- **T-Shirt-Grösse:** ${aufwandLabel}`);
+  lines.push(`- **Confidence:** ${confLabel}`);
   lines.push('');
   lines.push('---');
   lines.push('*Erstellt mit WWZ Business Value Scorecard*');
   return lines.join('\n');
 }
 
-const css = {
+const S = {
   header: { marginBottom:'2rem', paddingBottom:'1.25rem', borderBottom:'1px solid var(--border)' },
-  headerTitle: { fontFamily:'var(--mono)', fontSize:'11px', letterSpacing:'0.12em', color:'var(--muted)', textTransform:'uppercase', marginBottom:'0.4rem' },
-  h1: { fontFamily:'var(--mono)', fontSize:'22px', fontWeight:600, color:'var(--text)', letterSpacing:'-0.02em' },
-  card: { background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'var(--r2)', padding:'1.25rem', marginBottom:'1rem' },
-  sectionLabel: { fontFamily:'var(--mono)', fontSize:'10px', letterSpacing:'0.1em', color:'var(--muted)', textTransform:'uppercase', marginBottom:'0.75rem' },
-  fieldLabel: { fontSize:'12px', color:'var(--muted)', marginBottom:'4px' },
-  input: { width:'100%', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'8px 12px', color:'var(--text)', fontFamily:'var(--sans)', fontSize:'14px', outline:'none', transition:'border-color 0.15s' },
-  critCard: { background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'1rem', marginBottom:'8px' },
+  mono11: { fontFamily:'var(--mono)', fontSize:'11px', letterSpacing:'0.1em', textTransform:'uppercase' },
+  h1: { fontFamily:'var(--mono)', fontSize:'22px', fontWeight:600, letterSpacing:'-0.02em' },
+  groupCard: (accent) => ({ border:`1px solid ${accent || 'var(--border)'}`, borderRadius:'var(--r2)', overflow:'hidden', marginBottom:'1.25rem' }),
+  groupHeader: (accent) => ({ background: accent || 'var(--bg2)', padding:'7px 16px', display:'flex', alignItems:'center', gap:'8px' }),
+  groupBody: { padding:'1.25rem', background:'var(--bg2)' },
+  critCard: { background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'0.875rem 1rem', marginBottom:'8px' },
   critName: { fontSize:'13px', fontWeight:500, marginBottom:'2px' },
   critHint: { fontSize:'11px', color:'var(--muted)', marginBottom:'10px' },
   scoreGrid: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'6px' },
-  scoreBtn: (selected, pts) => ({
-    padding:'8px 4px 6px',
-    border:`1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
-    borderRadius:'var(--r)',
-    background: selected ? 'var(--accent-dim)' : 'var(--bg2)',
-    cursor:'pointer',
-    textAlign:'center',
-    transition:'all 0.12s',
-    outline:'none',
+  scoreBtn: (sel) => ({
+    padding:'8px 4px 6px', border:`1px solid ${sel?'var(--accent)':'var(--border)'}`,
+    borderRadius:'var(--r)', background: sel?'var(--accent-dim)':'var(--bg)',
+    cursor:'pointer', textAlign:'center', transition:'all 0.12s', outline:'none',
   }),
-  scorePts: (selected) => ({
-    fontFamily:'var(--mono)', fontSize:'18px', fontWeight:600,
-    color: selected ? 'var(--accent)' : 'var(--muted)',
-    display:'block', marginBottom:'3px',
-  }),
-  scoreLbl: (selected) => ({
-    fontSize:'10px', color: selected ? '#a0b8ff' : 'var(--muted)',
-    lineHeight:1.3, whiteSpace:'pre-wrap',
-  }),
+  scorePts: (sel) => ({ fontFamily:'var(--mono)', fontSize:'18px', fontWeight:600, color: sel?'var(--accent)':'var(--muted)', display:'block', marginBottom:'3px' }),
+  scoreLbl: (sel) => ({ fontSize:'10px', color: sel?'#a0b8ff':'var(--muted)', lineHeight:1.3, whiteSpace:'pre-wrap' }),
   gateBtn: (active, variant) => ({
-    flex:1, padding:'9px', border:`1px solid ${active ? (variant==='ja'?'var(--red)':'var(--green)') : 'var(--border)'}`,
-    borderRadius:'var(--r)', background: active ? (variant==='ja'?'var(--red-dim)':'var(--green-dim)') : 'var(--bg3)',
-    color: active ? (variant==='ja'?'var(--red)':'var(--green)') : 'var(--muted)',
-    fontFamily:'var(--sans)', fontSize:'13px', fontWeight: active ? 500 : 400,
-    cursor:'pointer', transition:'all 0.12s',
+    flex:1, padding:'9px', borderRadius:'var(--r)',
+    border:`1px solid ${active?(variant==='ja'?'var(--red)':'var(--green)'):'var(--border)'}`,
+    background: active?(variant==='ja'?'var(--red-dim)':'var(--green-dim)'):'var(--bg3)',
+    color: active?(variant==='ja'?'var(--red)':'var(--green)'):'var(--muted)',
+    fontFamily:'var(--sans)', fontSize:'13px', fontWeight: active?500:400, cursor:'pointer', transition:'all 0.12s',
   }),
-  select: { width:'100%', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'8px 10px', color:'var(--text)', fontFamily:'var(--sans)', fontSize:'13px', outline:'none' },
-  resultBar: (prio) => ({
-    background: prio.bg, border:`1px solid ${prio.color}33`,
-    borderRadius:'var(--r2)', padding:'1.25rem 1.5rem',
-    display:'flex', alignItems:'center', gap:'1.5rem', flexWrap:'wrap',
-    marginBottom:'1rem',
+  input: { width:'100%', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'8px 12px', color:'var(--text)', fontFamily:'var(--sans)', fontSize:'14px', outline:'none' },
+  fieldLabel: { fontSize:'12px', color:'var(--muted)', marginBottom:'4px' },
+  tshirtBtn: (sel) => ({
+    flex:1, padding:'10px 4px 8px', border:`1px solid ${sel?'rgba(255,255,255,0.25)':'var(--border)'}`,
+    borderRadius:'var(--r)', background: sel?'var(--bg3)':'var(--bg)',
+    cursor:'pointer', textAlign:'center', transition:'all 0.12s', outline:'none',
   }),
-  copyBtn: (copied) => ({
+  copyBtn: (active) => ({
     width:'100%', padding:'11px', fontFamily:'var(--mono)', fontSize:'12px', letterSpacing:'0.06em',
-    background: copied ? 'var(--green-dim)' : 'var(--accent-dim)',
-    border:`1px solid ${copied ? 'var(--green)' : 'var(--accent)'}`,
-    color: copied ? 'var(--green)' : 'var(--accent)',
+    background: active?'var(--green-dim)':'var(--accent-dim)',
+    border:`1px solid ${active?'var(--green)':'var(--accent)'}`,
+    color: active?'var(--green)':'var(--accent)',
     borderRadius:'var(--r)', cursor:'pointer', transition:'all 0.15s', marginBottom:'8px',
   }),
-  textarea: { width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'12px', color:'var(--muted)', fontFamily:'var(--mono)', fontSize:'11px', lineHeight:'1.7', resize:'vertical', minHeight:'240px', outline:'none' },
+  pngBtn: { width:'100%', padding:'11px', fontFamily:'var(--mono)', fontSize:'12px', letterSpacing:'0.06em', background:'var(--bg2)', border:'1px solid var(--border)', color:'var(--muted)', borderRadius:'var(--r)', cursor:'pointer', marginBottom:'8px' },
+  previewBtn: { width:'100%', padding:'11px', fontFamily:'var(--mono)', fontSize:'12px', letterSpacing:'0.06em', background:'var(--bg2)', border:'1px solid var(--border)', color:'var(--muted)', borderRadius:'var(--r)', cursor:'pointer', marginBottom:'8px' },
+  textarea: { width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'12px', color:'var(--muted)', fontFamily:'var(--mono)', fontSize:'11px', lineHeight:'1.7', resize:'vertical', minHeight:'220px', outline:'none' },
 };
+
+function SectionHeader({ label, accent, textColor }) {
+  return (
+    <div style={S.groupHeader(accent)}>
+      <span style={{ fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, letterSpacing:'0.12em',
+        color: textColor || '#000', textTransform:'uppercase' }}>{label}</span>
+    </div>
+  );
+}
 
 function App() {
   const [featureName, setFeatureName] = useState('');
-  const [gate, setGate] = useState(null);
-  const [scores, setScores] = useState({});
-  const [aufwand, setAufwand] = useState('');
-  const [confidence, setConfidence] = useState('');
-  const [kpi, setKpi] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [showExport, setShowExport] = useState(false);
+  const [gate, setGate]               = useState(null);
+  const [scores, setScores]           = useState({});
+  const [kpi, setKpi]                 = useState('');
+  const [aufwand, setAufwand]         = useState(null);
+  const [confIdx, setConfIdx]         = useState(-1);
+  const [copied, setCopied]           = useState(false);
+  const [showExport, setShowExport]   = useState(false);
+  const resultRef = useRef(null);
 
-  const total = Object.values(scores).reduce((a,b)=>a+b,0);
-  const prio = getPrio(total);
+  const total = Object.values(scores).reduce((a,b)=>a+b, 0);
   const rated = Object.keys(scores).length;
+  const prio  = getPrio(total);
+  const conf  = confIdx >= 0 ? CONF_LEVELS[confIdx] : null;
 
-  const exportText = buildExport({ featureName, gate, scores, aufwand, confidence, kpi });
+  const exportText = buildExport({ featureName, gate, scores, aufwand, confIdx, kpi });
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(exportText).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
     });
   }, [exportText]);
 
+  const handlePng = useCallback(() => {
+    if (!resultRef.current) return;
+    html2canvas(resultRef.current, { backgroundColor:'#0f1117', scale: 2 }).then(canvas => {
+      const a = document.createElement('a');
+      a.download = `bv-scorecard-${(featureName||'export').replace(/\s+/g,'-').toLowerCase()}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+  }, [featureName]);
+
   const reset = () => {
-    setFeatureName(''); setGate(null); setScores({}); setAufwand('');
-    setConfidence(''); setKpi(''); setShowExport(false);
+    setFeatureName(''); setGate(null); setScores({}); setKpi('');
+    setAufwand(null); setConfIdx(-1); setShowExport(false);
   };
+
+  const tshirtW = aufwand==='S'?'25%':aufwand==='M'?'50%':aufwand==='L'?'75%':aufwand==='XL'?'100%':'0%';
 
   return (
     <div>
-      <div style={css.header}>
-        <div style={css.headerTitle}>WWZ AG · IT-Governance</div>
-        <div style={css.h1}>Business Value Scorecard</div>
+      {/* Page header */}
+      <div style={S.header}>
+        <div style={{...S.mono11, color:'var(--muted)', marginBottom:'0.4rem'}}>WWZ AG · IT-Governance</div>
+        <div style={S.h1}>Business Value Scorecard</div>
       </div>
 
-      {/* Feature Name */}
+      {/* Feature name */}
       <div style={{marginBottom:'1rem'}}>
-        <div style={css.fieldLabel}>Feature / Demand</div>
-        <input style={css.input} placeholder="z.B. Festnetz App — Push Notifications"
+        <div style={S.fieldLabel}>Feature / Demand</div>
+        <input style={S.input} placeholder="z.B. Festnetz App — Push Notifications"
           value={featureName} onChange={e=>setFeatureName(e.target.value)} />
       </div>
 
-      {/* Gate 1 */}
-      <div style={css.card}>
-        <div style={css.sectionLabel}>Gate 1 — Pflichtprüfung</div>
-        <div style={{fontSize:'13px', color:'var(--text)', marginBottom:'10px'}}>
-          Regulatorisch verpflichtend? Security-kritisch? Audit Finding? Betriebsrisiko kritisch?
-        </div>
-        <div style={{display:'flex', gap:'8px'}}>
-          <button style={css.gateBtn(gate==='ja','ja')} onClick={()=>setGate('ja')}>
-            {gate==='ja' ? '✓ ' : ''}Ja — MUSS-Feature
-          </button>
-          <button style={css.gateBtn(gate==='nein','nein')} onClick={()=>setGate('nein')}>
-            {gate==='nein' ? '✓ ' : ''}Nein — zur Bewertung
-          </button>
+      {/* ── GATE 1 ── */}
+      <div style={{...S.groupCard(), marginBottom:'1.25rem'}}>
+        <SectionHeader label="Gate 1 — Pflichtprüfung" accent="var(--bg3)" textColor="var(--muted)" />
+        <div style={{...S.groupBody, borderTop:'1px solid var(--border)'}}>
+          <div style={{fontSize:'13px', color:'var(--text)', marginBottom:'10px'}}>
+            Regulatorisch verpflichtend? Security-kritisch? Audit Finding? Betriebsrisiko kritisch?
+          </div>
+          <div style={{display:'flex', gap:'8px'}}>
+            <button style={S.gateBtn(gate==='ja','ja')}   onClick={()=>setGate(g=>g==='ja'?null:'ja')}>
+              {gate==='ja'?'✓ ':''} Ja — MUSS-Feature
+            </button>
+            <button style={S.gateBtn(gate==='nein','nein')} onClick={()=>setGate(g=>g==='nein'?null:'nein')}>
+              {gate==='nein'?'✓ ':''} Nein — zur Bewertung
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Criteria */}
-      <div style={{marginBottom:'1.25rem'}}>
-        <div style={{...css.sectionLabel, marginBottom:'0.75rem'}}>Kriterien — {rated}/6 bewertet</div>
-        {CRITERIA.map(cr => (
-          <div key={cr.id} style={css.critCard}>
-            <div style={css.critName}>{cr.name}</div>
-            <div style={css.critHint}>{cr.hint}</div>
-            <div style={css.scoreGrid}>
-              {PTS.map((p,i) => {
-                const sel = scores[cr.id] === p;
-                return (
-                  <button key={p} style={css.scoreBtn(sel, p)}
-                    onClick={()=>setScores(s=>({...s,[cr.id]:p}))}>
-                    <span style={css.scorePts(sel)}>{p}</span>
-                    <span style={css.scoreLbl(sel)}>{cr.opts[i]}</span>
-                  </button>
-                );
-              })}
+      {/* ── GESCHÄFTSWERT ── */}
+      <div style={S.groupCard(gate==='ja' ? 'rgba(255,92,92,0.25)' : 'rgba(79,124,255,0.3)')}>
+        <SectionHeader
+          label={gate==='ja' ? 'Geschäftswert — nicht erforderlich (MUSS-Feature)' : `Geschäftswert — ${rated}/6 Kriterien bewertet`}
+          accent={gate==='ja' ? 'rgba(255,92,92,0.15)' : 'rgba(79,124,255,0.18)'}
+          textColor={gate==='ja' ? 'var(--red)' : 'var(--accent)'} />
+        {gate==='ja' ? (
+          <div style={{...S.groupBody, borderTop:'1px solid rgba(255,92,92,0.2)', display:'flex', alignItems:'center', gap:'14px'}}>
+            <span style={{fontSize:'20px', flexShrink:0}}>⚠</span>
+            <div>
+              <div style={{fontSize:'13px', color:'var(--red)', fontWeight:500, marginBottom:'2px'}}>Bewertung entfällt</div>
+              <div style={{fontSize:'12px', color:'var(--muted)'}}>MUSS-Features werden unabhängig vom Business Value Score umgesetzt — regulatorisch, security-kritisch oder Betriebsrisiko.</div>
             </div>
           </div>
-        ))}
+        ) : (
+          <div style={{...S.groupBody, borderTop:'1px solid rgba(79,124,255,0.2)'}}>
+            {CRITERIA.map(cr => (
+              <div key={cr.id} style={S.critCard}>
+                <div style={S.critName}>{cr.name}</div>
+                <div style={S.critHint}>{cr.hint}</div>
+                <div style={S.scoreGrid}>
+                  {PTS.map((p,i) => {
+                    const sel = scores[cr.id] === p;
+                    return (
+                      <button key={p} style={S.scoreBtn(sel)}
+                        onClick={()=>setScores(s=>({...s,[cr.id]:p}))}>
+                        <span style={S.scorePts(sel)}>{p}</span>
+                        <span style={S.scoreLbl(sel)}>{cr.opts[i]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div style={{marginTop:'4px'}}>
+              <div style={S.fieldLabel}>Erwartbarer KPI</div>
+              <input style={S.input} placeholder="z.B. Churn −1 %, Callvolumen −10 %, Conversion +5 % …"
+                value={kpi} onChange={e=>setKpi(e.target.value)} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Extras */}
-      <div style={css.card}>
-        <div style={css.sectionLabel}>Weitere Angaben</div>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
-          <div>
-            <div style={css.fieldLabel}>Aufwand</div>
-            <select style={css.select} value={aufwand} onChange={e=>setAufwand(e.target.value)}>
-              <option value="">—</option>
-              <option>S (1–15 PT)</option>
-              <option>M (10–50 PT)</option>
-              <option>L (45–90 PT)</option>
-              <option>XL (&gt;90 PT)</option>
-            </select>
+      {/* ── AUFWAND ── */}
+      <div style={S.groupCard('rgba(167,139,250,0.3)')}>
+        <SectionHeader label="Aufwand" accent="rgba(167,139,250,0.15)" textColor="var(--purple)" />
+        <div style={{...S.groupBody, borderTop:'1px solid rgba(167,139,250,0.2)'}}>
+
+          {/* T-Shirt buttons */}
+          <div style={{...S.fieldLabel, marginBottom:'8px'}}>T-Shirt-Grösse</div>
+          <div style={{display:'flex', gap:'8px', marginBottom:'1.25rem'}}>
+            {TSHIRTS.map(t => {
+              const sel = aufwand === t.val;
+              return (
+                <button key={t.val} style={S.tshirtBtn(sel)} onClick={()=>setAufwand(a=>a===t.val?null:t.val)}>
+                  <span style={{fontFamily:'var(--mono)', fontSize:'20px', fontWeight:600,
+                    color: sel?'var(--purple)':'var(--muted)', display:'block', marginBottom:'2px'}}>{t.label}</span>
+                  <span style={{fontSize:'10px', color: sel?'var(--purple)':'var(--muted)'}}>{t.range}</span>
+                </button>
+              );
+            })}
           </div>
-          <div>
-            <div style={css.fieldLabel}>Confidence der Annahmen</div>
-            <select style={css.select} value={confidence} onChange={e=>setConfidence(e.target.value)}>
-              <option value="">—</option>
-              <option>Niedrig — Hypothese</option>
-              <option>Mittel — plausible Annahmen</option>
-              <option>Hoch — datenbasiert validiert</option>
-            </select>
+
+          {/* Confidence slider */}
+          <div style={{...S.fieldLabel, marginBottom:'12px'}}>Confidence der Annahmen</div>
+          <div style={{padding:'0 4px'}}>
+            <input type="range" min={-1} max={2} step={1} value={confIdx}
+              onChange={e=>setConfIdx(Number(e.target.value))}
+              style={{
+                background: confIdx < 0
+                  ? 'rgba(255,255,255,0.08)'
+                  : `linear-gradient(to right, ${CONF_LEVELS[confIdx].color} 0%, ${CONF_LEVELS[confIdx].color} ${((confIdx+1)/3*100).toFixed(0)}%, rgba(255,255,255,0.08) ${((confIdx+1)/3*100).toFixed(0)}%, rgba(255,255,255,0.08) 100%)`,
+              }}
+            />
+            <style>{`input[type=range]::-webkit-slider-thumb { background: ${conf ? conf.color : 'var(--muted)'}; }`}</style>
+            <div style={{display:'flex', justifyContent:'space-between', marginTop:'8px'}}>
+              {CONF_LEVELS.map((c,i) => (
+                <div key={c.val} style={{textAlign:'center', flex:1}}>
+                  <div style={{fontFamily:'var(--mono)', fontSize:'11px', fontWeight: confIdx===i?600:400,
+                    color: confIdx===i ? c.color : 'var(--muted)', transition:'color 0.2s'}}>{c.val}</div>
+                  <div style={{fontSize:'10px', color:'var(--muted)'}}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
+            {confIdx < 0 && <div style={{textAlign:'center', fontSize:'11px', color:'var(--muted)', marginTop:'4px'}}>— nicht gesetzt (Schieber nach rechts) —</div>}
           </div>
-        </div>
-        <div>
-          <div style={css.fieldLabel}>Erwartbarer KPI</div>
-          <input style={css.input} placeholder="z.B. Churn −1 %, Callvolumen −10 %, Conversion +5 % …"
-            value={kpi} onChange={e=>setKpi(e.target.value)} />
         </div>
       </div>
 
-      {/* Score Result — prominent summary */}
+      {/* ── RESULT CARD ── */}
       {(() => {
-        const confColor = confidence.startsWith('Hoch') ? 'var(--green)' : confidence.startsWith('Mittel') ? 'var(--amber)' : confidence.startsWith('Niedrig') ? 'var(--red)' : 'var(--muted)';
-        const confBg    = confidence.startsWith('Hoch') ? 'var(--green-dim)' : confidence.startsWith('Mittel') ? 'var(--amber-dim)' : confidence.startsWith('Niedrig') ? 'var(--red-dim)' : 'transparent';
-        const tshirtW   = aufwand.startsWith('S')?'25%': aufwand.startsWith('M')?'50%': aufwand.startsWith('L')?'75%': aufwand.startsWith('X')?'100%':'0%';
+        const isMuss = gate === 'ja';
+        const cardColor  = isMuss ? 'var(--red)'    : prio.color;
+        const cardBg     = isMuss ? 'var(--red-dim)': prio.bg;
+        const cardBorder = isMuss ? 'rgba(255,92,92,0.35)' : `${prio.color}44`;
         return (
-          <div style={{border:`1px solid ${prio.color}44`, borderRadius:'var(--r2)', overflow:'hidden', marginBottom:'1rem'}}>
-            {/* header bar: prio color + feature title */}
-            <div style={{background: prio.color, padding:'8px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem'}}>
-              <span style={{fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, letterSpacing:'0.12em', color:'#000', textTransform:'uppercase', whiteSpace:'nowrap'}}>Ergebnis</span>
-              <span style={{fontFamily:'var(--sans)', fontSize:'13px', fontWeight:600, color:'rgba(0,0,0,0.75)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                {featureName || '—'}
-              </span>
-            </div>
-
-            {/* two metric panels */}
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr'}}>
-              {/* BV Score */}
-              <div style={{background: prio.bg, padding:'1.5rem 1.75rem', borderRight:`1px solid ${prio.color}33`}}>
-                <div style={{fontFamily:'var(--mono)', fontSize:'11px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:'0.5rem'}}>
-                  Business Value Score
-                </div>
-                <div style={{display:'flex', alignItems:'baseline', gap:'6px', marginBottom:'0.75rem'}}>
-                  <span style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color: prio.color, lineHeight:1}}>{total}</span>
-                  <span style={{fontFamily:'var(--mono)', fontSize:'18px', color:'var(--muted)', fontWeight:400}}>/30</span>
-                </div>
-                <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'8px'}}>
-                  <div style={{height:'100%', width:`${Math.round(total/30*100)}%`, background: prio.color, borderRadius:'2px', transition:'width 0.4s ease'}} />
-                </div>
-                <div style={{fontFamily:'var(--mono)', fontSize:'13px', fontWeight:600, color: prio.color, letterSpacing:'0.04em'}}>
-                  {prio.label}
-                </div>
-              </div>
-
-              {/* T-Shirt + Confidence */}
-              <div style={{background:'var(--bg2)', padding:'1.5rem 1.75rem'}}>
-                <div style={{fontFamily:'var(--mono)', fontSize:'11px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:'0.5rem'}}>
-                  Aufwand (T-Shirt)
-                </div>
-                {aufwand ? (
-                  <>
-                    <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--text)', lineHeight:1, marginBottom:'0.75rem'}}>
-                      {aufwand.split(' ')[0]}
-                    </div>
-                    <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'10px'}}>
-                      <div style={{height:'100%', borderRadius:'2px', background:'var(--muted)', width: tshirtW, transition:'width 0.4s ease'}} />
-                    </div>
-                    <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'8px'}}>
-                      {aufwand.replace(/^.\s/,'')}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--border2)', lineHeight:1, marginBottom:'0.75rem'}}>—</div>
-                    <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'8px'}}>nicht gesetzt</div>
-                  </>
-                )}
-                {/* Confidence badge */}
-                {confidence ? (
-                  <div style={{display:'inline-block', background: confBg, border:`1px solid ${confColor}55`, borderRadius:'var(--r)', padding:'3px 10px'}}>
-                    <span style={{fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, color: confColor, letterSpacing:'0.06em', textTransform:'uppercase'}}>
-                      {confidence.split(' ')[0]}
-                    </span>
-                    <span style={{fontSize:'11px', color: confColor, opacity:0.75, marginLeft:'6px'}}>
-                      {confidence.includes('Hoch') ? 'datenbasiert' : confidence.includes('Mittel') ? 'plausible Annahmen' : 'Hypothese'}
-                    </span>
-                  </div>
-                ) : (
-                  <div style={{fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)', letterSpacing:'0.06em'}}>CONFIDENCE — nicht gesetzt</div>
-                )}
-              </div>
-            </div>
-
-            {/* KPI footer */}
-            {kpi && (
-              <div style={{borderTop:`1px solid ${prio.color}22`, background:'var(--bg3)', padding:'10px 1.75rem', display:'flex', alignItems:'center', gap:'12px'}}>
-                <span style={{fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', whiteSpace:'nowrap'}}>KPI</span>
-                <span style={{fontSize:'13px', color:'var(--text)'}}>{kpi}</span>
-              </div>
-            )}
+        <div ref={resultRef} style={{border:`1px solid ${cardBorder}`, borderRadius:'var(--r2)', overflow:'hidden', marginBottom:'1rem', background:'var(--bg)'}}>
+          {/* header */}
+          <div style={{background: cardColor, padding:'8px 16px', display:'flex', alignItems:'center', gap:'1rem'}}>
+            <span style={{fontFamily:'var(--sans)', fontSize:'13px', fontWeight:600, color:'rgba(0,0,0,0.8)',
+              overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1}}>
+              {featureName || '—'}
+            </span>
           </div>
+
+          {/* two panels */}
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr'}}>
+            {/* Score / MUSS panel */}
+            <div style={{background: cardBg, padding:'1.5rem 1.75rem', borderRight:`1px solid ${cardColor}33`}}>
+              <div style={{...S.mono11, color:'var(--muted)', marginBottom:'0.5rem'}}>
+                {isMuss ? 'Klassifizierung' : 'Business Value Score'}
+              </div>
+              {isMuss ? (
+                <>
+                  <div style={{fontFamily:'var(--mono)', fontSize:'46px', fontWeight:600, color:'var(--red)', lineHeight:1, marginBottom:'0.75rem', letterSpacing:'-0.02em'}}>MUSS</div>
+                  <div style={{fontFamily:'var(--mono)', fontSize:'12px', fontWeight:600, color:'var(--red)', letterSpacing:'0.04em'}}>
+                    Pflicht-Umsetzung
+                  </div>
+                  <div style={{fontSize:'11px', color:'var(--muted)', marginTop:'4px'}}>
+                    Regulatorisch / Security / Betriebsrisiko
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{display:'flex', alignItems:'baseline', gap:'6px', marginBottom:'0.75rem'}}>
+                    <span style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color: prio.color, lineHeight:1}}>{total}</span>
+                    <span style={{fontFamily:'var(--mono)', fontSize:'18px', color:'var(--muted)'}}>/30</span>
+                  </div>
+                  <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'8px'}}>
+                    <div style={{height:'100%', width:`${Math.round(total/30*100)}%`, background: prio.color, borderRadius:'2px', transition:'width 0.4s ease'}} />
+                  </div>
+                  <div style={{fontFamily:'var(--mono)', fontSize:'13px', fontWeight:600, color: prio.color, letterSpacing:'0.04em'}}>
+                    {prio.label}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* T-Shirt + Confidence */}
+            <div style={{background:'var(--bg2)', padding:'1.5rem 1.75rem'}}>
+              <div style={{...S.mono11, color:'var(--muted)', marginBottom:'0.5rem'}}>Aufwand</div>
+              {aufwand ? (
+                <>
+                  <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--text)', lineHeight:1, marginBottom:'0.75rem'}}>{aufwand}</div>
+                  <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'10px'}}>
+                    <div style={{height:'100%', borderRadius:'2px', background:'var(--purple)', width: tshirtW, transition:'width 0.4s ease'}} />
+                  </div>
+                  <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'10px'}}>
+                    {TSHIRTS.find(t=>t.val===aufwand)?.range}
+                  </div>
+                </>
+              ) : (
+                <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--border2)', lineHeight:1, marginBottom:'1.25rem'}}>—</div>
+              )}
+              {conf ? (
+                <div style={{display:'inline-flex', alignItems:'center', gap:'6px', background: conf.bg,
+                  border:`1px solid ${conf.color}55`, borderRadius:'var(--r)', padding:'4px 10px'}}>
+                  <span style={{fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, color: conf.color, letterSpacing:'0.06em', textTransform:'uppercase'}}>{conf.val}</span>
+                  <span style={{fontSize:'11px', color: conf.color, opacity:0.75}}>{conf.sub}</span>
+                </div>
+              ) : (
+                <div style={{fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)', letterSpacing:'0.06em'}}>CONFIDENCE — nicht gesetzt</div>
+              )}
+            </div>
+          </div>
+
+          {/* KPI footer */}
+          {kpi && (
+            <div style={{borderTop:`1px solid ${cardColor}22`, background:'var(--bg3)', padding:'10px 1.75rem', display:'flex', alignItems:'center', gap:'12px'}}>
+              <span style={{...S.mono11, color:'var(--muted)', whiteSpace:'nowrap'}}>KPI</span>
+              <span style={{fontSize:'13px', color:'var(--text)'}}>{kpi}</span>
+            </div>
+          )}
+        </div>
         );
       })()}
 
-      {/* Export */}
-      <button style={css.copyBtn(copied)} onClick={handleCopy}>
+      {/* ── EXPORT BUTTONS ── */}
+      <button style={S.copyBtn(copied)} onClick={handleCopy}>
         {copied ? '✓ IN ZWISCHENABLAGE KOPIERT' : '⎘ MARKDOWN FÜR AZURE DEVOPS KOPIEREN'}
       </button>
-      <button style={{...css.copyBtn(false), background:'var(--bg2)', border:'1px solid var(--border)', color:'var(--muted)'}}
-        onClick={()=>setShowExport(v=>!v)}>
-        {showExport ? '▴ VORSCHAU AUSBLENDEN' : '▾ VORSCHAU ANZEIGEN'}
+      <button style={S.pngBtn} onClick={handlePng}>
+        ↓ ERGEBNIS ALS PNG EXPORTIEREN
       </button>
+      <button style={S.previewBtn} onClick={()=>setShowExport(v=>!v)}>
+        {showExport ? '▴ VORSCHAU AUSBLENDEN' : '▾ MARKDOWN VORSCHAU'}
+      </button>
+      {showExport && <textarea style={S.textarea} readOnly value={exportText} />}
 
-      {showExport && (
-        <textarea style={css.textarea} readOnly value={exportText} />
-      )}
-
-      {/* Reset */}
       <div style={{textAlign:'center', marginTop:'1.5rem'}}>
         <button onClick={reset} style={{background:'none', border:'none', color:'var(--muted)', fontSize:'12px', fontFamily:'var(--mono)', cursor:'pointer', letterSpacing:'0.06em'}}>
           ↺ ZURÜCKSETZEN
