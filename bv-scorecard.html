@@ -276,26 +276,89 @@ function App() {
         </div>
       </div>
 
-      {/* Score Result */}
-      <div style={css.resultBar(prio)}>
-        <div>
-          <div style={{fontFamily:'var(--mono)', fontSize:'10px', color: prio.color, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'2px'}}>Business Value Score</div>
-          <div style={{fontFamily:'var(--mono)', fontSize:'38px', fontWeight:600, color: prio.color, lineHeight:1}}>
-            {total}<span style={{fontSize:'16px', fontWeight:400, opacity:0.6}}> / 30</span>
+      {/* Score Result — prominent summary */}
+      {(() => {
+        const confColor = confidence.startsWith('Hoch') ? 'var(--green)' : confidence.startsWith('Mittel') ? 'var(--amber)' : confidence.startsWith('Niedrig') ? 'var(--red)' : 'var(--muted)';
+        const confBg    = confidence.startsWith('Hoch') ? 'var(--green-dim)' : confidence.startsWith('Mittel') ? 'var(--amber-dim)' : confidence.startsWith('Niedrig') ? 'var(--red-dim)' : 'transparent';
+        const tshirtW   = aufwand.startsWith('S')?'25%': aufwand.startsWith('M')?'50%': aufwand.startsWith('L')?'75%': aufwand.startsWith('X')?'100%':'0%';
+        return (
+          <div style={{border:`1px solid ${prio.color}44`, borderRadius:'var(--r2)', overflow:'hidden', marginBottom:'1rem'}}>
+            {/* header bar: prio color + feature title */}
+            <div style={{background: prio.color, padding:'8px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem'}}>
+              <span style={{fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, letterSpacing:'0.12em', color:'#000', textTransform:'uppercase', whiteSpace:'nowrap'}}>Ergebnis</span>
+              <span style={{fontFamily:'var(--sans)', fontSize:'13px', fontWeight:600, color:'rgba(0,0,0,0.75)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                {featureName || '—'}
+              </span>
+            </div>
+
+            {/* two metric panels */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr'}}>
+              {/* BV Score */}
+              <div style={{background: prio.bg, padding:'1.5rem 1.75rem', borderRight:`1px solid ${prio.color}33`}}>
+                <div style={{fontFamily:'var(--mono)', fontSize:'11px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:'0.5rem'}}>
+                  Business Value Score
+                </div>
+                <div style={{display:'flex', alignItems:'baseline', gap:'6px', marginBottom:'0.75rem'}}>
+                  <span style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color: prio.color, lineHeight:1}}>{total}</span>
+                  <span style={{fontFamily:'var(--mono)', fontSize:'18px', color:'var(--muted)', fontWeight:400}}>/30</span>
+                </div>
+                <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'8px'}}>
+                  <div style={{height:'100%', width:`${Math.round(total/30*100)}%`, background: prio.color, borderRadius:'2px', transition:'width 0.4s ease'}} />
+                </div>
+                <div style={{fontFamily:'var(--mono)', fontSize:'13px', fontWeight:600, color: prio.color, letterSpacing:'0.04em'}}>
+                  {prio.label}
+                </div>
+              </div>
+
+              {/* T-Shirt + Confidence */}
+              <div style={{background:'var(--bg2)', padding:'1.5rem 1.75rem'}}>
+                <div style={{fontFamily:'var(--mono)', fontSize:'11px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:'0.5rem'}}>
+                  Aufwand (T-Shirt)
+                </div>
+                {aufwand ? (
+                  <>
+                    <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--text)', lineHeight:1, marginBottom:'0.75rem'}}>
+                      {aufwand.split(' ')[0]}
+                    </div>
+                    <div style={{height:'3px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'10px'}}>
+                      <div style={{height:'100%', borderRadius:'2px', background:'var(--muted)', width: tshirtW, transition:'width 0.4s ease'}} />
+                    </div>
+                    <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'8px'}}>
+                      {aufwand.replace(/^.\s/,'')}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{fontFamily:'var(--mono)', fontSize:'56px', fontWeight:600, color:'var(--border2)', lineHeight:1, marginBottom:'0.75rem'}}>—</div>
+                    <div style={{fontSize:'11px', color:'var(--muted)', marginBottom:'8px'}}>nicht gesetzt</div>
+                  </>
+                )}
+                {/* Confidence badge */}
+                {confidence ? (
+                  <div style={{display:'inline-block', background: confBg, border:`1px solid ${confColor}55`, borderRadius:'var(--r)', padding:'3px 10px'}}>
+                    <span style={{fontFamily:'var(--mono)', fontSize:'10px', fontWeight:600, color: confColor, letterSpacing:'0.06em', textTransform:'uppercase'}}>
+                      {confidence.split(' ')[0]}
+                    </span>
+                    <span style={{fontSize:'11px', color: confColor, opacity:0.75, marginLeft:'6px'}}>
+                      {confidence.includes('Hoch') ? 'datenbasiert' : confidence.includes('Mittel') ? 'plausible Annahmen' : 'Hypothese'}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)', letterSpacing:'0.06em'}}>CONFIDENCE — nicht gesetzt</div>
+                )}
+              </div>
+            </div>
+
+            {/* KPI footer */}
+            {kpi && (
+              <div style={{borderTop:`1px solid ${prio.color}22`, background:'var(--bg3)', padding:'10px 1.75rem', display:'flex', alignItems:'center', gap:'12px'}}>
+                <span style={{fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)', letterSpacing:'0.08em', textTransform:'uppercase', whiteSpace:'nowrap'}}>KPI</span>
+                <span style={{fontSize:'13px', color:'var(--text)'}}>{kpi}</span>
+              </div>
+            )}
           </div>
-        </div>
-        <div style={{flex:1, minWidth:100}}>
-          <div style={{height:'4px', background:'rgba(255,255,255,0.08)', borderRadius:'2px', overflow:'hidden', marginBottom:'8px'}}>
-            <div style={{height:'100%', width:`${Math.round(total/30*100)}%`, background: prio.color, borderRadius:'2px', transition:'width 0.3s'}} />
-          </div>
-          <div style={{fontFamily:'var(--mono)', fontSize:'12px', fontWeight:500, color: prio.color}}>
-            {prio.label}
-          </div>
-          <div style={{fontSize:'11px', color:'var(--muted)', marginTop:'2px'}}>
-            &lt;8 gering · 8–13 relevant · 14–21 hohe Prio · &gt;22 strategisch
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Export */}
       <button style={css.copyBtn(copied)} onClick={handleCopy}>
