@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🐧 Pingu zählt!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ice:#e0f7ff; --sky:#b3e8ff; --dsky:#5bc8f5;
+  --snow:#f0fbff; --blue:#2196f3; --dblue:#1565c0;
+  --yellow:#ffdd57; --orange:#ff9f43; --mint:#52d9a0;
+  --pink:#ff8fab; --purple:#b56ef7; --red:#ff6b6b;
+  --dark:#1a2744; --white:#ffffff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Fredoka One',cursive;
+  background:linear-gradient(180deg,#a8d8f0 0%,#c8eeff 35%,#e8f8ff 65%,#d4f5e2 100%);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;overflow-x:hidden;overflow-y:auto;}
+
+/* ── SNOWFLAKES ── */
+.sf{position:fixed;top:-20px;color:white;font-size:1.2rem;animation:sfFall var(--sd) linear var(--dl) infinite;z-index:0;pointer-events:none;opacity:.7;}
+@keyframes sfFall{0%{transform:translateY(-30px) rotate(0deg);opacity:.7}100%{transform:translateY(105vh) rotate(360deg);opacity:0}}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:1;width:100%;max-width:440px;
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 12px 20px;gap:10px;min-height:100vh;}
+
+/* ── HEADER ── */
+.header{text-align:center;}
+.title{font-size:clamp(1.8rem,7vw,2.6rem);color:var(--dblue);
+  text-shadow:3px 3px 0 rgba(33,150,243,.2);line-height:1;}
+.subtitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;
+  color:#5b8db8;margin-top:2px;}
+
+/* ── LEVEL DOTS ── */
+.level-dots{display:flex;gap:6px;justify-content:center;}
+.ld{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.4);
+  border:2px solid rgba(91,140,184,.3);transition:all .3s;}
+.ld.done{background:var(--yellow);border-color:var(--orange);}
+.ld.active{background:var(--dsky);border-color:var(--blue);transform:scale(1.3);}
+
+/* ── PINGU STAGE ── */
+.pingu-stage{position:relative;width:100%;max-width:280px;height:200px;
+  display:flex;align-items:center;justify-content:center;}
+.pingu-wrap{width:170px;height:170px;filter:drop-shadow(0 6px 18px rgba(33,150,243,.3));
+  animation:pinguBob 2.5s ease-in-out infinite;flex-shrink:0;}
+.pingu-wrap svg{width:100%;height:100%;overflow:visible;}
+@keyframes pinguBob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+@keyframes pinguDance{0%{transform:rotate(-12deg) translateY(0)}25%{transform:rotate(12deg) translateY(-8px)}50%{transform:rotate(-12deg) translateY(0)}75%{transform:rotate(12deg) translateY(-8px)}100%{transform:rotate(-12deg) translateY(0)}}
+@keyframes pinguSad{0%,100%{transform:rotate(0deg)}30%{transform:rotate(-5deg)}70%{transform:rotate(5deg)}}
+
+/* ── SPEECH BUBBLE ── */
+.speech{position:absolute;top:0;right:-10px;background:white;
+  border-radius:20px 20px 20px 4px;padding:8px 14px;
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;
+  color:var(--dark);box-shadow:0 4px 16px rgba(0,0,0,.12);
+  max-width:140px;text-align:center;line-height:1.3;z-index:10;
+  animation:bubblePop .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes bubblePop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── OBJECTS TO COUNT ── */
+.objects-card{background:white;border-radius:28px;padding:18px 16px;
+  width:100%;max-width:380px;
+  box-shadow:0 6px 28px rgba(33,150,243,.15),0 1px 0 rgba(255,255,255,.9) inset;}
+.obj-label{font-family:'Nunito',sans-serif;font-weight:900;font-size:.78rem;
+  color:#5b8db8;text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:10px;}
+.objects-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:80px;align-items:center;}
+.obj-item{font-size:clamp(2.4rem,9vw,3.2rem);animation:objPop var(--op) cubic-bezier(.34,1.56,.64,1) both;
+  line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.1));}
+@keyframes objPop{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
+
+/* ── ANSWER BUTTONS ── */
+.answers{display:flex;gap:10px;justify-content:center;width:100%;max-width:380px;flex-wrap:wrap;}
+.ans-btn{
+  flex:0 0 calc(20% - 8px);min-width:60px;max-width:80px;
+  aspect-ratio:1;
+  border-radius:20px;border:4px solid rgba(255,255,255,.6);
+  background:white;color:var(--dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.1),0 -3px 0 rgba(0,0,0,.08) inset;
+  transition:transform .12s,box-shadow .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ans-btn:active{transform:scale(.93);}
+.ans-num{font-size:2.2rem;line-height:1;}
+.ans-dots{font-size:.5rem;color:var(--dsky);letter-spacing:1px;min-height:8px;}
+
+.ans-btn.correct{background:linear-gradient(135deg,#d1fae5,#6ee7b7);border-color:var(--mint);
+  box-shadow:0 0 28px rgba(82,217,160,.6);animation:correctBig .5s cubic-bezier(.34,1.56,.64,1);}
+.ans-btn.wrong{background:linear-gradient(135deg,#fff0f0,#fecaca);border-color:#fca5a5;
+  animation:wrongWobble .4s ease;}
+@keyframes correctBig{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes wrongWobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+
+/* ── PROGRESS ── */
+.progress-wrap{width:100%;max-width:380px;height:10px;background:rgba(255,255,255,.4);border-radius:999px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--dsky),var(--mint));
+  transition:width .5s cubic-bezier(.34,1.2,.64,1);
+  box-shadow:0 0 10px rgba(91,200,245,.5);}
+
+/* ── UPGRADE LABEL ── */
+.upgrade-lbl{font-family:'Nunito',sans-serif;font-weight:800;font-size:.75rem;
+  color:var(--dblue);text-align:center;min-height:17px;opacity:.8;}
+
+/* ── CONFETTI ── */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:200;}
+.cp{position:absolute;border-radius:3px;animation:cffall var(--fd) ease-in var(--dl) forwards;opacity:0;}
+@keyframes cffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(600deg);opacity:0}}
+
+/* ── LEVEL UP ── */
+.lu-ov{position:fixed;inset:0;z-index:300;
+  background:linear-gradient(160deg,rgba(168,216,240,.95),rgba(200,238,255,.95));
+  backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.lu-ov.show{opacity:1;pointer-events:all;}
+.lu-pingu{width:140px;height:140px;animation:pinguDance 1s ease-in-out infinite;}
+.lu-pingu svg{width:100%;height:100%;overflow:visible;}
+.lu-title{font-size:clamp(2.2rem,9vw,3.5rem);color:var(--dblue);
+  text-shadow:3px 3px 0 rgba(33,150,243,.2);text-align:center;
+  animation:luPulse 1s ease-in-out infinite alternate;}
+@keyframes luPulse{from{transform:scale(1)}to{transform:scale(1.06)}}
+.lu-upgrade{background:white;border:3px solid var(--dsky);border-radius:16px;
+  padding:10px 22px;font-family:'Nunito',sans-serif;font-weight:800;
+  font-size:.95rem;color:var(--dblue);text-align:center;}
+.lu-btn{font-size:1.5rem;padding:18px 50px;border:none;border-radius:999px;
+  background:linear-gradient(135deg,var(--dsky),var(--blue));
+  color:white;cursor:pointer;
+  box-shadow:0 8px 24px rgba(33,150,243,.4),0 -3px 0 rgba(0,0,0,.1) inset;
+  transition:transform .15s;}
+.lu-btn:active{transform:scale(.95);}
+
+/* ── WIN ── */
+.win-ov{position:fixed;inset:0;z-index:400;
+  background:linear-gradient(160deg,#a8d8f0,#c8eeff,#d4f5e2);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  overflow-y:auto;padding:20px 14px 40px;gap:14px;
+  opacity:0;pointer-events:none;transition:opacity .4s;}
+.win-ov.show{opacity:1;pointer-events:all;}
+.win-title{font-size:clamp(1.8rem,7vw,2.8rem);color:var(--dblue);text-align:center;
+  text-shadow:2px 2px 0 rgba(33,150,243,.2);}
+.diploma-wrap{background:white;border-radius:24px;padding:24px 18px;max-width:380px;width:100%;
+  text-align:center;position:relative;border:6px solid transparent;background-clip:padding-box;}
+.diploma-wrap::before{content:'';position:absolute;inset:-6px;border-radius:28px;z-index:-1;
+  background:linear-gradient(135deg,var(--yellow),var(--dsky),var(--mint),var(--pink),var(--yellow));
+  background-size:300% 300%;animation:rbBorder 3s linear infinite;}
+@keyframes rbBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.dip-head{font-size:1.1rem;color:var(--dblue);margin-bottom:3px;}
+.dip-name{font-size:2.4rem;color:var(--blue);line-height:1.1;margin:6px 0;}
+.dip-pingu{width:90px;height:90px;margin:0 auto;animation:pinguBob 2s ease-in-out infinite;}
+.dip-pingu svg{width:100%;height:100%;overflow:visible;}
+.dip-text{font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;
+  color:#1a4a7a;line-height:1.6;margin:8px 0;}
+.dip-stats{display:flex;justify-content:center;gap:18px;margin:8px 0;}
+.dsv{font-size:1.7rem;color:var(--blue);}
+.dsl{font-family:'Nunito',sans-serif;font-weight:800;font-size:.62rem;
+  color:#5b8db8;text-transform:uppercase;letter-spacing:.5px;}
+.dip-seal{display:inline-flex;align-items:center;justify-content:center;
+  width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  font-size:1.6rem;border:3px solid white;box-shadow:0 4px 14px rgba(255,159,67,.4);margin:6px 0 3px;}
+.dip-date{font-family:'Nunito',sans-serif;font-weight:700;font-size:.68rem;color:#5b8db8;}
+.win-btns{display:flex;flex-direction:column;gap:9px;width:100%;max-width:280px;}
+.win-btn{font-size:1.1rem;padding:14px 18px;border:none;border-radius:999px;
+  cursor:pointer;color:white;width:100%;transition:transform .15s;
+  box-shadow:0 6px 18px rgba(0,0,0,.15);}
+.win-btn:active{transform:scale(.97);}
+.win-btn.dl{background:linear-gradient(135deg,var(--dsky),var(--blue));}
+.win-btn.re{background:linear-gradient(135deg,var(--mint),#2ec98a);}
+</style>
+</head>
+<body>
+
+<div class="confetti-wrap" id="confetti"></div>
+
+<!-- LEVEL UP -->
+<div class="lu-ov" id="luOv">
+  <div class="lu-pingu"><svg id="luSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="lu-title" id="luTitle">⭐ Toll!</div>
+  <div class="lu-upgrade" id="luUpgrade">Neues Upgrade!</div>
+  <button class="lu-btn" onclick="closeLevelUp()">Weiter! 🐧</button>
+</div>
+
+<!-- WIN -->
+<div class="win-ov" id="winOv">
+  <div class="win-title">🎉 Super gemacht!</div>
+  <div class="diploma-wrap" id="diplomaEl">
+    <div class="dip-head">⭐ Zähl-Urkunde ⭐</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:.68rem;color:#5b8db8">für</div>
+    <div class="dip-name" id="dipName">Zähl-Profi</div>
+    <div class="dip-pingu"><svg id="dipSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="dip-text">hat mit Pingu bis 5 gezählt<br>und alle <strong>10 Level</strong> gemeistert! 🐧❄️</div>
+    <div class="dip-stats">
+      <div><div class="dsv" id="winScore">0</div><div class="dsl">Punkte</div></div>
+      <div><div class="dsv" id="winCorrect">0</div><div class="dsl">Richtig</div></div>
+    </div>
+    <div class="dip-seal">🏆</div>
+    <div class="dip-date" id="dipDate"></div>
+  </div>
+  <div class="win-btns">
+    <button class="win-btn dl" onclick="downloadPDF()">📄 Urkunde speichern</button>
+    <button class="win-btn re" onclick="restartGame()">🔄 Nochmal spielen</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="title">🐧 Pingu zählt!</div>
+    <div class="subtitle" id="headerSub">Wie viele siehst du?</div>
+  </div>
+
+  <div class="level-dots" id="levelDots"></div>
+
+  <div class="pingu-stage">
+    <div class="pingu-wrap" id="pinguWrap">
+      <svg id="mainSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="speech" id="speech">Zähl mit mir! 🐟</div>
+  </div>
+
+  <div class="upgrade-lbl" id="upgradeLabel">Pingu 🐧</div>
+
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="objects-card">
+    <div class="obj-label" id="objLabel">Wie viele Fische siehst du?</div>
+    <div class="objects-grid" id="objectsGrid"></div>
+  </div>
+
+  <div class="answers" id="answers"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  UPGRADES
+// ═══════════════════════════════════════
+const UPGRADES=[
+  {name:'Pingu 🐧',            desc:'Noot noot! Pingu ist bereit!'},
+  {name:'Schal ❄️',            desc:'Ein warmer Schal für Pingu!'},
+  {name:'Mütze 🎿',            desc:'Die coolste Mütze der Antarktis!'},
+  {name:'Fisch 🐟',            desc:'Pingu hat einen Fisch gefangen!'},
+  {name:'Schnee ❄️',           desc:'Es schneit in der Antarktis!'},
+  {name:'Schlitten 🛷',        desc:'Pingu fährt Schlitten!'},
+  {name:'Iglu 🏠',             desc:'Pingus gemütliches Zuhause!'},
+  {name:'Mama Pinga 🐧',       desc:'Mama Pinga kommt zu Besuch!'},
+  {name:'Robby der Walross 🦭',desc:'Pingus bester Freund ist da!'},
+  {name:'ZÄHL-MEISTER 🏆',     desc:'Du kannst bis 5 zählen! Fantastisch!'},
+];
+
+// ── SVG ANIMATIONS ──
+const SVG_ANIM=`<defs><style>
+  .scarf{transform-origin:100px 140px;animation:scarfWave 2s ease-in-out infinite alternate;}
+  @keyframes scarfWave{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+  .hat{transform-origin:100px 55px;animation:hatBob 2.5s ease-in-out infinite alternate;}
+  @keyframes hatBob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+  .fish{transform-origin:160px 130px;animation:fishWag 1.8s ease-in-out infinite alternate;}
+  @keyframes fishWag{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+  .snowflake{animation:sfSpin 4s linear infinite;}
+  @keyframes sfSpin{to{transform:rotate(360deg)}}
+  .sled{transform-origin:100px 185px;animation:sledRock 2s ease-in-out infinite alternate;}
+  @keyframes sledRock{from{transform:rotate(-1deg)}to{transform:rotate(1deg)}}
+  .iglu{transform-origin:40px 185px;animation:igluBob 3s ease-in-out infinite alternate;}
+  @keyframes igluBob{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+  .mama{transform-origin:170px 150px;animation:mamaBob 2.2s ease-in-out infinite alternate;}
+  @keyframes mamaBob{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+  .walrus{transform-origin:25px 165px;animation:walrusBob 2.8s ease-in-out infinite alternate;}
+  @keyframes walrusBob{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+  .star-spin{transform-origin:100px 100px;animation:starSpin 3s linear infinite;}
+  @keyframes starSpin{to{transform:rotate(360deg)}}
+</style></defs>`;
+
+function buildPingu(level){
+  const hasScarf   = level>=2;
+  const hasHat     = level>=3;
+  const hasFish    = level>=4;
+  const hasSnow    = level>=5;
+  const hasSled    = level>=6;
+  const hasIglu    = level>=7;
+  const hasMama    = level>=8;
+  const hasWalrus  = level>=9;
+  const hasStars   = level>=10;
+
+  let s=SVG_ANIM;
+
+  // snow bg
+  if(hasSnow){
+    // ground
+    s+=`<ellipse cx="100" cy="198" rx="95" ry="18" fill="#e0f7ff" opacity=".8"/>`;
+    // snowflakes
+    [[20,30],[60,15],[140,25],[175,40],[35,70],[165,65]].forEach(([x,y],i)=>{
+      s+=`<text class="snowflake" x="${x}" y="${y}" font-size="12" fill="white" opacity=".8" style="animation-delay:${i*.5}s">❄</text>`;
+    });
+  }
+
+  // walrus (Robby) — left side
+  if(hasWalrus){
+    s+=`<g class="walrus">`;
+    // body
+    s+=`<ellipse cx="28" cy="172" rx="22" ry="18" fill="#8b7355"/>`;
+    // head
+    s+=`<circle cx="28" cy="152" r="16" fill="#9b8465"/>`;
+    // tusks
+    s+=`<path d="M22 164 Q16 172 14 180" fill="none" stroke="ivory" stroke-width="3" stroke-linecap="round"/>`;
+    s+=`<path d="M34 164 Q40 172 42 180" fill="none" stroke="ivory" stroke-width="3" stroke-linecap="round"/>`;
+    // eyes
+    s+=`<circle cx="23" cy="148" r="4" fill="#1a1a2e"/>`;
+    s+=`<circle cx="33" cy="148" r="4" fill="#1a1a2e"/>`;
+    s+=`<circle cx="24" cy="147" r="1.5" fill="white"/>`;
+    s+=`<circle cx="34" cy="147" r="1.5" fill="white"/>`;
+    // nose
+    s+=`<ellipse cx="28" cy="157" rx="6" ry="4" fill="#7a6345"/>`;
+    // whiskers
+    s+=`<line x1="14" y1="156" x2="22" y2="157" stroke="#5a4a35" stroke-width="1.5"/>`;
+    s+=`<line x1="14" y1="160" x2="22" y2="159" stroke="#5a4a35" stroke-width="1.5"/>`;
+    s+=`<line x1="34" y1="157" x2="42" y2="156" stroke="#5a4a35" stroke-width="1.5"/>`;
+    s+=`<line x1="34" y1="159" x2="42" y2="160" stroke="#5a4a35" stroke-width="1.5"/>`;
+    s+=`</g>`;
+  }
+
+  // iglu — behind pingu left
+  if(hasIglu){
+    s+=`<g class="iglu">`;
+    // dome
+    s+=`<path d="M15 185 Q15 155 42 155 Q69 155 69 185 Z" fill="#d4f0ff" stroke="#a0d8ef" stroke-width="2"/>`;
+    // blocks
+    s+=`<path d="M15 175 Q42 172 69 175" fill="none" stroke="#a0d8ef" stroke-width="1.5"/>`;
+    s+=`<path d="M18 165 Q42 162 66 165" fill="none" stroke="#a0d8ef" stroke-width="1.5"/>`;
+    s+=`<line x1="42" y1="155" x2="42" y2="185" stroke="#a0d8ef" stroke-width="1.5"/>`;
+    // door
+    s+=`<path d="M34 185 Q34 176 42 176 Q50 176 50 185 Z" fill="#a0d8ef"/>`;
+    s+=`</g>`;
+  }
+
+  // mama pingu — right side, smaller
+  if(hasMama){
+    s+=`<g class="mama">`;
+    // body
+    s+=`<ellipse cx="170" cy="162" rx="18" ry="22" fill="#1a1a2e"/>`;
+    s+=`<ellipse cx="170" cy="162" rx="11" ry="15" fill="white"/>`;
+    // head
+    s+=`<circle cx="170" cy="138" r="16" fill="#1a1a2e"/>`;
+    // face
+    s+=`<ellipse cx="170" cy="142" rx="9" ry="7" fill="#ff9f43"/>`;
+    // eyes
+    s+=`<circle cx="165" cy="134" r="4" fill="white"/>`;
+    s+=`<circle cx="175" cy="134" r="4" fill="white"/>`;
+    s+=`<circle cx="165" cy="134" r="2" fill="#1a1a2e"/>`;
+    s+=`<circle cx="175" cy="134" r="2" fill="#1a1a2e"/>`;
+    // bow
+    s+=`<path d="M160 128 Q166 122 170 126 Q174 122 180 128 Q174 132 170 129 Q166 132 160 128 Z" fill="#ff8fab"/>`;
+    // flippers
+    s+=`<ellipse cx="152" cy="162" rx="7" ry="11" fill="#1a1a2e" transform="rotate(-15 152 162)"/>`;
+    s+=`<ellipse cx="188" cy="162" rx="7" ry="11" fill="#1a1a2e" transform="rotate(15 188 162)"/>`;
+    // feet
+    s+=`<ellipse cx="163" cy="184" rx="9" ry="5" fill="#ff9f43"/>`;
+    s+=`<ellipse cx="177" cy="184" rx="9" ry="5" fill="#ff9f43"/>`;
+    s+=`</g>`;
+  }
+
+  // sled
+  if(hasSled){
+    s+=`<g class="sled">`;
+    s+=`<rect x="62" y="182" width="76" height="10" rx="5" fill="#e05a7a"/>`;
+    s+=`<rect x="68" y="190" width="14" height="5" rx="2.5" fill="#c04060"/>`;
+    s+=`<rect x="118" y="190" width="14" height="5" rx="2.5" fill="#c04060"/>`;
+    // rope
+    s+=`<path d="M100 130 Q90 158 80 178" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>`;
+    s+=`</g>`;
+  }
+
+  // ── MAIN PINGU BODY ──
+  // body
+  s+=`<ellipse cx="100" cy="148" rx="42" ry="48" fill="#1a1a2e"/>`;
+  // white belly
+  s+=`<ellipse cx="100" cy="150" rx="28" ry="36" fill="white"/>`;
+
+  // wings/flippers
+  s+=`<ellipse cx="58" cy="148" rx="14" ry="28" fill="#1a1a2e" transform="rotate(-10 58 148)"/>`;
+  s+=`<ellipse cx="142" cy="148" rx="14" ry="28" fill="#1a1a2e" transform="rotate(10 142 148)"/>`;
+
+  // feet
+  s+=`<ellipse cx="84" cy="193" rx="18" ry="8" fill="#ff9f43"/>`;
+  s+=`<ellipse cx="116" cy="193" rx="18" ry="8" fill="#ff9f43"/>`;
+
+  // head
+  s+=`<circle cx="100" cy="88" r="44" fill="#1a1a2e"/>`;
+  // white face patch
+  s+=`<ellipse cx="100" cy="95" rx="30" ry="26" fill="white"/>`;
+
+  // beak
+  s+=`<ellipse cx="100" cy="106" rx="16" ry="10" fill="#ff9f43"/>`;
+  s+=`<path d="M84 106 Q100 114 116 106" fill="none" stroke="#e07820" stroke-width="2"/>`;
+
+  // eyes — big kawaii
+  s+=`<circle cx="84" cy="80" r="13" fill="white"/>`;
+  s+=`<circle cx="84" cy="81" r="8" fill="#1a2744"/>`;
+  s+=`<circle cx="87" cy="78" r="3" fill="white"/>`;
+  s+=`<circle cx="116" cy="80" r="13" fill="white"/>`;
+  s+=`<circle cx="116" cy="81" r="8" fill="#1a2744"/>`;
+  s+=`<circle cx="119" cy="78" r="3" fill="white"/>`;
+
+  // cheeks
+  s+=`<ellipse cx="70" cy="92" rx="9" ry="6" fill="#ffb3c6" opacity=".5"/>`;
+  s+=`<ellipse cx="130" cy="92" rx="9" ry="6" fill="#ffb3c6" opacity=".5"/>`;
+
+  // hat
+  if(hasHat){
+    // beanie
+    s+=`<g class="hat">`;
+    s+=`<rect x="66" y="46" width="68" height="32" rx="8" fill="#e05a7a"/>`;
+    s+=`<rect x="62" y="52" width="76" height="12" rx="6" fill="#ff8fab"/>`;
+    // stripes
+    s+=`<rect x="66" y="46" width="10" height="32" rx="4" fill="white" opacity=".3"/>`;
+    s+=`<rect x="86" y="46" width="10" height="32" rx="4" fill="white" opacity=".2"/>`;
+    s+=`<rect x="106" y="46" width="10" height="32" rx="4" fill="white" opacity=".2"/>`;
+    // pompom
+    s+=`<circle cx="100" cy="44" r="10" fill="white"/>`;
+    s+=`<circle cx="100" cy="44" r="6" fill="#ff8fab"/>`;
+    s+=`</g>`;
+  }
+
+  // scarf
+  if(hasScarf){
+    s+=`<g class="scarf">`;
+    s+=`<path d="M60 128 Q100 120 140 128 Q145 140 140 148 Q100 140 60 148 Q55 140 60 128 Z" fill="#5bc8f5"/>`;
+    // stripes
+    s+=`<path d="M60 132 Q100 124 140 132" fill="none" stroke="white" stroke-width="2" opacity=".5"/>`;
+    s+=`<path d="M60 144 Q100 136 140 144" fill="none" stroke="white" stroke-width="2" opacity=".5"/>`;
+    // tail end
+    s+=`<rect x="56" y="140" width="10" height="22" rx="5" fill="#5bc8f5"/>`;
+    s+=`<rect x="52" y="158" width="18" height="6" rx="3" fill="#5bc8f5"/>`;
+    s+=`</g>`;
+  }
+
+  // fish in hand
+  if(hasFish){
+    s+=`<g class="fish">`;
+    s+=`<ellipse cx="155" cy="130" rx="22" ry="11" fill="#5bc8f5" transform="rotate(-20 155 130)"/>`;
+    s+=`<path d="M172 120 Q182 112 180 124 Q182 130 172 126 Z" fill="#5bc8f5" transform="rotate(-20 172 120)"/>`;
+    // eye
+    s+=`<circle cx="145" cy="126" r="3" fill="white"/>`;
+    s+=`<circle cx="145" cy="126" r="1.5" fill="#1a1a2e"/>`;
+    // fin
+    s+=`<path d="M152 120 Q158 112 164 118" fill="#3aabdb" transform="rotate(-20 158 119)"/>`;
+    s+=`</g>`;
+  }
+
+  // win stars
+  if(hasStars){
+    [[30,30],[170,30],[100,18],[50,60],[150,60]].forEach(([x,y],i)=>{
+      s+=`<g class="star-spin" style="transform-origin:${x}px ${y}px;animation-delay:${i*.4}s">`;
+      s+=`<path d="M${x} ${y-9} l2 5.5 l6 0 l-4.8 3.5 l1.8 5.5 l-5-3.2 l-5 3.2 l1.8-5.5 l-4.8-3.5 l6 0 z" fill="${['#ffdd57','#5bc8f5','#ff8fab','#52d9a0','#b56ef7'][i]}"/>`;
+      s+=`</g>`;
+    });
+  }
+
+  return s;
+}
+
+function renderPingu(id,level){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=buildPingu(level);
+}
+
+// ═══════════════════════════════════════
+//  OBJECTS TO COUNT
+// ═══════════════════════════════════════
+const OBJECT_SETS=[
+  {emoji:'🐟',label:'Fische'},
+  {emoji:'⭐',label:'Sterne'},
+  {emoji:'❄️',label:'Schneeflocken'},
+  {emoji:'🐧',label:'Pinguine'},
+  {emoji:'🐠',label:'Fische'},
+  {emoji:'🌟',label:'Sterne'},
+];
+
+// ═══════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════
+let score=0,level=1,answered=false;
+let playerName='Zähl-Profi';
+const QPL=6; // short sessions for 3-year-olds
+let questionInLevel=0,currentAnswer=0,totalCorrect=0;
+let currentObjSet=0;
+
+// max count per level range
+function maxCount(l){return l<=2?3:l<=4?4:5;}
+
+const SPEECH_RIGHT=['Super! 🌟','Toll! 🐧','Ja! ⭐','Richtig! 🎉','Noot noot! 🐟','Wunderbar! ✨'];
+const SPEECH_WRONG=['Nochmal! 💙','Zähl nochmal! ❄️','Fast! Schau nochmal! 🐧'];
+const SPEECH_ASK=['Zähl mit mir! 🐟','Wie viele? ⭐','Kannst du zählen? ❄️','Zähl die alle! 🌟'];
+
+function setSpeech(msg){
+  const el=document.getElementById('speech');
+  el.style.animation='none';el.textContent=msg;
+  requestAnimationFrame(()=>el.style.animation='bubblePop .35s cubic-bezier(.34,1.56,.64,1)');
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function dots(n){return '●'.repeat(n);}
+
+function buildLevelDots(){
+  const c=document.getElementById('levelDots');c.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const d=document.createElement('div');
+    d.className='ld'+(i<level?' done':i===level?' active':'');
+    c.appendChild(d);
+  }
+}
+
+function nextQuestion(){
+  answered=false;
+  const max=maxCount(level);
+  const count=Math.floor(Math.random()*max)+1;
+  currentAnswer=count;
+  currentObjSet=Math.floor(Math.random()*OBJECT_SETS.length);
+  const obj=OBJECT_SETS[currentObjSet];
+
+  // object label
+  document.getElementById('objLabel').textContent=`Wie viele ${obj.label} siehst du?`;
+
+  // render objects with staggered pop-in
+  const grid=document.getElementById('objectsGrid');
+  grid.innerHTML='';
+  for(let i=0;i<count;i++){
+    const span=document.createElement('span');
+    span.className='obj-item';
+    span.textContent=obj.emoji;
+    span.style.setProperty('--op',`${0.2+i*0.12}s`);
+    span.style.animationDelay=`${i*0.1}s`;
+    grid.appendChild(span);
+  }
+
+  // choices: always show 1 through max, shuffled
+  const maxBtn=maxCount(level);
+  const allChoices=[];
+  for(let i=1;i<=maxBtn;i++) allChoices.push(i);
+  // ensure we have 4-5 buttons but not more than max
+  const choices=allChoices.length>=4?allChoices:allChoices;
+
+  const cont=document.getElementById('answers');cont.innerHTML='';
+  choices.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='ans-btn';
+    btn.innerHTML=`<span class="ans-num">${c}</span><span class="ans-dots">${dots(c)}</span>`;
+    btn.onclick=()=>handleAnswer(c,btn);
+    cont.appendChild(btn);
+  });
+
+  setSpeech(SPEECH_ASK[Math.floor(Math.random()*SPEECH_ASK.length)]);
+  document.getElementById('progressFill').style.width=(questionInLevel/QPL*100)+'%';
+  buildLevelDots();
+}
+
+function handleAnswer(val,btn){
+  if(answered)return;answered=true;
+
+  if(val===currentAnswer){
+    totalCorrect++;score+=10;questionInLevel++;
+    btn.classList.add('correct');
+    setSpeech(SPEECH_RIGHT[Math.floor(Math.random()*SPEECH_RIGHT.length)]);
+    flashPingu('happy');
+    spawnConfetti(35);
+    document.getElementById('score')&&(document.getElementById('score').textContent=score);
+    if(questionInLevel>=QPL) setTimeout(doLevelUp,800);
+    else setTimeout(nextQuestion,1000);
+  } else {
+    btn.classList.add('wrong');
+    setSpeech(SPEECH_WRONG[Math.floor(Math.random()*SPEECH_WRONG.length)]);
+    flashPingu('sad');
+    setTimeout(()=>{btn.classList.remove('wrong');answered=false;},700);
+  }
+}
+
+function flashPingu(mood){
+  const w=document.getElementById('pinguWrap');
+  if(mood==='happy'){
+    w.style.animation='pinguDance .8s ease-in-out';
+    w.style.filter='drop-shadow(0 0 28px rgba(255,221,87,.9))';
+    setTimeout(()=>{w.style.animation='pinguBob 2.5s ease-in-out infinite';w.style.filter='drop-shadow(0 6px 18px rgba(33,150,243,.3))';},900);
+  } else {
+    w.style.animation='pinguSad .4s ease';
+    w.style.filter='drop-shadow(0 0 16px rgba(239,68,68,.5))';
+    setTimeout(()=>{w.style.animation='pinguBob 2.5s ease-in-out infinite';w.style.filter='drop-shadow(0 6px 18px rgba(33,150,243,.3))';},500);
+  }
+}
+
+function doLevelUp(){
+  const next=level+1;
+  if(next>10){showWin();return;}
+  level=next;questionInLevel=0;
+  document.getElementById('upgradeLabel').textContent=UPGRADES[level-1].name;
+  renderPingu('mainSvg',level);
+  renderPingu('luSvg',level);
+  document.getElementById('luTitle').textContent=`⭐ ${UPGRADES[level-1].name}`;
+  document.getElementById('luUpgrade').textContent=UPGRADES[level-1].desc;
+  document.getElementById('luOv').classList.add('show');
+  spawnConfetti(60);
+}
+
+function closeLevelUp(){
+  document.getElementById('luOv').classList.remove('show');
+  nextQuestion();
+}
+
+function showWin(){
+  const now=new Date();
+  document.getElementById('dipDate').textContent=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('dipName').textContent=playerName;
+  document.getElementById('winScore').textContent=score;
+  document.getElementById('winCorrect').textContent=totalCorrect;
+  renderPingu('dipSvg',10);
+  document.getElementById('winOv').classList.add('show');
+  spawnConfetti(100);
+}
+
+async function downloadPDF(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;left:-9999px;top:0;width:540px;background:white;font-family:"Fredoka One",cursive;';
+  el.innerHTML=`
+    <div style="padding:32px;text-align:center;border:8px solid transparent;
+      background:linear-gradient(white,white) padding-box,
+      linear-gradient(135deg,#ffdd57,#5bc8f5,#52d9a0,#ff8fab,#ffdd57) border-box;border-radius:20px;">
+      <div style="font-size:2rem;margin-bottom:6px">🐧 ⭐ 🐧</div>
+      <div style="font-size:1.5rem;color:#1565c0;margin-bottom:3px">⭐ Zähl-Urkunde ⭐</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;color:#5b8db8;margin-bottom:6px">für</div>
+      <div style="font-size:2.8rem;color:#2196f3;line-height:1.1;margin-bottom:10px">${playerName}</div>
+      <div style="font-size:4.5rem;line-height:1;margin:8px 0">🐧</div>
+      <div style="width:80%;height:2px;background:linear-gradient(90deg,transparent,#a0d8ef,transparent);margin:14px auto"></div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:#1a4a7a;line-height:1.8;margin:10px 0">
+        hat mit Pingu bis 5 gezählt<br>und alle <strong>10 Level</strong> gemeistert! 🐧❄️✨
+      </div>
+      <div style="display:flex;justify-content:center;gap:14px;margin:16px 0">
+        <div style="background:#e0f7ff;border-radius:12px;padding:10px 22px">
+          <div style="font-size:2rem;color:#2196f3">${score}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:.65rem;color:#5b8db8;font-weight:800">PUNKTE</div>
+        </div>
+        <div style="background:#e0f7ff;border-radius:12px;padding:10px 22px">
+          <div style="font-size:2rem;color:#2196f3">${totalCorrect}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:.65rem;color:#5b8db8;font-weight:800">RICHTIG</div>
+        </div>
+      </div>
+      <div style="width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#ffdd57,#f0a800);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:4px auto 10px;border:3px solid white;box-shadow:0 4px 14px rgba(240,168,0,.4)">🏆</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:.75rem;color:#5b8db8;margin-top:8px">${dateStr}</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:.7rem;color:#a0d8ef;margin-top:4px">🐧 Pingu zählt!</div>
+    </div>`;
+  document.body.appendChild(el);
+  try{
+    const{default:h2c}=await Promise.resolve({default:window.html2canvas});
+    const canvas=await html2canvas(el.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+    document.body.removeChild(el);
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,H=297,imgW=W-20,imgH=canvas.height*(imgW/canvas.width);
+    doc.addImage(canvas.toDataURL('image/png'),'PNG',10,Math.max(10,(H-imgH)/2),imgW,imgH);
+    doc.save(`Urkunde_${playerName}_Zaehlen.pdf`);
+  }catch(e){document.body.removeChild(el);alert('Fehler. Nochmal versuchen.');console.error(e);}
+}
+
+function restartGame(){
+  score=0;level=1;answered=false;questionInLevel=0;totalCorrect=0;
+  document.getElementById('upgradeLabel').textContent=UPGRADES[0].name;
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('winOv').classList.remove('show');
+  renderPingu('mainSvg',1);
+  nextQuestion();
+}
+
+// CONFETTI
+const CC=['#5bc8f5','#ffdd57','#52d9a0','#ff8fab','#b56ef7','#ff9f43','#a0d8ef'];
+function spawnConfetti(n=30){
+  const w=document.getElementById('confetti');
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='cp';const sz=7+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*10-5}%;width:${sz}px;height:${sz}px;background:${CC[Math.floor(Math.random()*CC.length)]};border-radius:${Math.random()<.5?'50%':'3px'};--fd:${1+Math.random()*1.5}s;--dl:${Math.random()*.3}s;`;
+    w.appendChild(p);setTimeout(()=>p.remove(),2800);
+  }
+}
+
+// snowflakes bg
+(function(){
+  for(let i=0;i<12;i++){
+    const s=document.createElement('div');s.className='sf';
+    s.textContent=['❄','❅','❆'][Math.floor(Math.random()*3)];
+    s.style.cssText=`left:${Math.random()*100}%;--sd:${4+Math.random()*6}s;--dl:${Math.random()*5}s;font-size:${.8+Math.random()*.8}rem;`;
+    document.body.appendChild(s);
+  }
+})();
+
+// ── INIT ──
+renderPingu('mainSvg',1);
+nextQuestion();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
