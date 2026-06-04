@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐷 Peppa lernt die Uhr</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --rosa:#ff8fab; --drosa:#e05a7a; --lrosa:#ffd6e0;
+  --rot:#ff4d6d; --gelb:#ffdd57; --mint:#52d9a0;
+  --sky:#5bc8f5; --purple:#b56ef7; --gold:#f9a825;
+  --bg:#fff0f5; --card:#fff; --dark:#3a1a2e;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;overflow-x:hidden;color:var(--dark);}
+
+/* rolling meadow bg */
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:linear-gradient(180deg,#ffe0f0 0%,#fff0f5 40%,#e8f8f0 100%);}
+body::after{content:'';position:fixed;bottom:0;left:0;right:0;height:120px;z-index:0;
+  background:radial-gradient(ellipse 120% 60% at 50% 100%,#a8e6c1 0%,transparent 70%);}
+
+/* clouds */
+.cloud{position:fixed;background:white;border-radius:999px;opacity:.75;animation:cloudDrift var(--cd) linear infinite;z-index:0;}
+.cloud::before,.cloud::after{content:'';position:absolute;background:white;border-radius:50%;}
+@keyframes cloudDrift{from{transform:translateX(-200px)}to{transform:translateX(calc(100vw + 200px))}}
+
+/* bubbles bg */
+.bubble-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bb{position:absolute;border-radius:50%;animation:bbFloat var(--bt) ease-in-out infinite alternate;}
+@keyframes bbFloat{from{transform:translateY(0) scale(1)}to{transform:translateY(-30px) scale(1.05)}}
+
+/* ── START SCREEN ── */
+.start-screen{position:fixed;inset:0;z-index:400;background:linear-gradient(160deg,#ffe0f0,#fff0f5,#e8f8f0);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;overflow-y:auto;}
+.start-screen.hidden{display:none;}
+.start-pig{font-size:5rem;animation:pigBounce 1.5s ease-in-out infinite;}
+@keyframes pigBounce{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+.start-title{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,7vw,3rem);
+  color:var(--drosa);text-shadow:3px 3px 0 rgba(255,77,109,.2);text-align:center;}
+.start-sub{font-size:.9rem;color:#b05070;font-weight:700;text-align:center;margin-top:-12px;}
+.start-card{background:white;border-radius:24px;padding:24px 26px;width:100%;max-width:380px;
+  display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 8px 32px rgba(255,143,171,.25),0 2px 0 var(--lrosa) inset;}
+.sc-label{font-size:.75rem;color:var(--drosa);font-weight:800;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;}
+.sc-input{font-family:'Nunito',sans-serif;font-weight:700;font-size:1.15rem;
+  background:#fff5f8;border:2px solid var(--lrosa);border-radius:12px;
+  color:var(--dark);padding:10px 14px;outline:none;width:100%;transition:border-color .2s;}
+.sc-input:focus{border-color:var(--rosa);}
+.sc-input::placeholder{color:rgba(255,143,171,.5);}
+.toggle-row{display:flex;align-items:center;gap:12px;}
+.tw{position:relative;width:48px;height:26px;flex-shrink:0;}
+.tw input{opacity:0;width:0;height:0;}
+.ts{position:absolute;inset:0;background:#ffd6e0;border-radius:999px;cursor:pointer;transition:.3s;}
+.ts::before{content:'';position:absolute;width:18px;height:18px;left:4px;top:4px;background:var(--rosa);border-radius:50%;transition:.3s;}
+.tw input:checked+.ts{background:linear-gradient(135deg,var(--rosa),var(--drosa));}
+.tw input:checked+.ts::before{transform:translateX(22px);background:white;}
+.tl{font-size:.88rem;font-weight:800;color:var(--drosa);}
+.ts2{font-size:.7rem;color:#b05070;opacity:.7;}
+.start-btn{font-family:'Fredoka One',cursive;font-size:1.3rem;padding:14px;
+  border:none;border-radius:16px;background:linear-gradient(135deg,var(--rosa),var(--drosa));
+  color:white;cursor:pointer;box-shadow:0 6px 20px rgba(224,90,122,.4),0 -3px 0 rgba(0,0,0,.1) inset;
+  transition:transform .15s,box-shadow .15s;}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(224,90,122,.5);}
+.start-btn:active{transform:translateY(1px);box-shadow:0 3px 10px rgba(224,90,122,.3);}
+
+/* ── MAIN LAYOUT ── */
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:14px 14px 40px;gap:13px;max-width:480px;margin:0 auto;}
+
+/* HEADER */
+header{text-align:center;}
+header h1{font-family:'Fredoka One',cursive;font-size:clamp(1.6rem,5vw,2.4rem);
+  color:var(--drosa);text-shadow:2px 2px 0 rgba(255,77,109,.2);}
+header p{font-size:.82rem;color:#b05070;font-weight:700;margin-top:2px;}
+
+/* HUD */
+.hud{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;width:100%;}
+.hud-pill{background:white;border-radius:999px;padding:7px 16px;
+  box-shadow:0 4px 16px rgba(255,143,171,.2),0 1px 0 rgba(255,214,224,.8) inset;
+  display:flex;align-items:center;gap:7px;font-weight:800;color:var(--dark);font-size:.88rem;}
+.hud-pill .val{color:var(--drosa);}
+
+/* LEVEL TRACK */
+.level-track{width:100%;}
+.lt-labels{display:flex;justify-content:space-between;font-size:.72rem;font-weight:800;color:#b05070;margin-bottom:4px;}
+.lt-bar{height:13px;background:rgba(255,143,171,.2);border-radius:999px;overflow:hidden;}
+.lt-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--rosa),var(--drosa));
+  transition:width .6s cubic-bezier(.34,1.2,.64,1);box-shadow:0 0 10px rgba(255,143,171,.5);}
+
+/* ── PIG STAGE ── */
+.pig-stage{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;}
+.pig-wrap{width:190px;height:190px;filter:drop-shadow(0 6px 20px rgba(255,143,171,.4));animation:pigFloat 3s ease-in-out infinite;}
+.pig-wrap svg{width:100%;height:100%;overflow:visible;}
+@keyframes pigFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+.speech{position:absolute;top:-8px;right:-18px;background:white;border-radius:18px 18px 18px 4px;
+  padding:8px 13px;font-size:.83rem;font-weight:800;color:var(--dark);
+  box-shadow:0 4px 16px rgba(0,0,0,.12);max-width:150px;text-align:center;line-height:1.3;
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);z-index:10;}
+@keyframes popIn{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+
+.upgrade-lbl{font-size:.73rem;color:var(--drosa);font-weight:800;text-align:center;min-height:17px;}
+
+/* ── CLOCK ── */
+.clock-card{background:white;border-radius:28px;padding:22px 20px 18px;width:100%;max-width:420px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  box-shadow:0 8px 32px rgba(255,143,171,.18),0 1px 0 rgba(255,214,224,.8) inset;}
+.diff-badge{border-radius:999px;padding:4px 14px;font-size:.7rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.5px;color:white;}
+
+.clock-svg-wrap{filter:drop-shadow(0 4px 16px rgba(255,143,171,.3));}
+
+/* TIMER BAR */
+.timer-section{width:100%;display:none;flex-direction:column;gap:3px;}
+.timer-bar{height:9px;background:rgba(255,143,171,.2);border-radius:999px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--sky));
+  transition:width .1s linear,background .3s;}
+.timer-fill.warn{background:linear-gradient(90deg,#f97316,#ef4444);}
+.timer-lbl{font-size:.7rem;color:#b05070;font-weight:800;text-align:right;min-height:14px;}
+
+.streak-row{font-size:.85rem;font-weight:800;color:var(--gold);min-height:19px;text-align:center;}
+
+/* ── ANSWERS ── */
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:11px;width:100%;max-width:380px;}
+.ans-btn{font-family:'Fredoka One',cursive;font-size:1.55rem;padding:15px 8px;
+  border:3px solid rgba(255,143,171,.25);border-radius:18px;background:white;color:var(--dark);
+  cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s,background .15s;
+  box-shadow:0 4px 16px rgba(0,0,0,.06),0 -2px 0 rgba(0,0,0,.04) inset;}
+.ans-btn:hover{transform:translateY(-4px) scale(1.05);border-color:var(--rosa);
+  box-shadow:0 8px 24px rgba(255,143,171,.35);}
+.ans-btn:active{transform:scale(.96);}
+.ans-btn.correct{background:linear-gradient(135deg,#d1fae5,#6ee7b7);border-color:var(--mint);
+  box-shadow:0 0 24px rgba(82,217,160,.5);animation:correctPop .4s cubic-bezier(.34,1.56,.64,1);}
+.ans-btn.wrong{background:linear-gradient(135deg,#fee2e2,#fca5a5);border-color:var(--rot);
+  animation:shake .35s ease;}
+@keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* CONFETTI */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:200;}
+.cp{position:absolute;border-radius:3px;animation:cffall var(--fd) ease-in var(--dl) forwards;opacity:0;}
+@keyframes cffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(600deg);opacity:0}}
+
+/* ── LEVEL UP ── */
+.lu-ov{position:fixed;inset:0;z-index:300;background:rgba(255,220,235,.92);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s;}
+.lu-ov.show{opacity:1;pointer-events:all;}
+.lu-pig{width:150px;height:150px;animation:pigFloat 1.5s ease-in-out infinite;}
+.lu-pig svg{width:100%;height:100%;overflow:visible;}
+.lu-title{font-family:'Fredoka One',cursive;font-size:clamp(2rem,8vw,3.5rem);
+  color:var(--drosa);text-shadow:3px 3px 0 rgba(255,77,109,.25);text-align:center;
+  animation:titlePulse 1s ease-in-out infinite alternate;}
+@keyframes titlePulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+.lu-upgrade{background:white;border:3px solid var(--rosa);border-radius:16px;
+  padding:9px 20px;font-size:.95rem;font-weight:800;color:var(--drosa);text-align:center;}
+.lu-sub{font-size:.92rem;font-weight:700;color:#b05070;text-align:center;}
+.lu-btn{font-family:'Fredoka One',cursive;font-size:1.15rem;padding:13px 38px;
+  border:none;border-radius:999px;background:linear-gradient(135deg,var(--rosa),var(--drosa));
+  color:white;cursor:pointer;box-shadow:0 6px 20px rgba(224,90,122,.4);transition:transform .15s;}
+.lu-btn:hover{transform:scale(1.05);}
+
+/* ── WIN ── */
+.win-ov{position:fixed;inset:0;z-index:400;background:linear-gradient(160deg,#ffe0f0,#fff0f5,#e8f8f0);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  overflow-y:auto;padding:18px 14px 40px;gap:13px;opacity:0;pointer-events:none;transition:opacity .4s;}
+.win-ov.show{opacity:1;pointer-events:all;}
+.win-title{font-family:'Fredoka One',cursive;font-size:clamp(1.7rem,7vw,2.8rem);
+  color:var(--drosa);text-align:center;text-shadow:2px 2px 0 rgba(255,77,109,.2);}
+.diploma-wrap{background:white;border-radius:24px;padding:22px 18px;max-width:400px;width:100%;
+  text-align:center;position:relative;border:6px solid transparent;background-clip:padding-box;}
+.diploma-wrap::before{content:'';position:absolute;inset:-6px;border-radius:28px;z-index:-1;
+  background:linear-gradient(135deg,var(--gelb),var(--rosa),var(--purple),var(--mint),var(--gelb));
+  background-size:300% 300%;animation:rbBorder 3s linear infinite;}
+@keyframes rbBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.dip-head{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--drosa);margin-bottom:3px;}
+.dip-name{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--drosa);line-height:1.1;margin:6px 0;}
+.dip-pig{width:90px;height:90px;margin:0 auto;animation:pigFloat 2s ease-in-out infinite;}
+.dip-pig svg{width:100%;height:100%;overflow:visible;}
+.dip-text{font-size:.82rem;color:#5a3a8a;font-weight:700;line-height:1.6;margin:8px 0;}
+.dip-stats{display:flex;justify-content:center;gap:18px;margin:8px 0;}
+.dsv{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--drosa);}
+.dsl{font-size:.62rem;color:#b05070;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+.dip-seal{display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gelb),#f0a800);
+  font-size:1.5rem;border:3px solid white;box-shadow:0 4px 14px rgba(240,168,0,.4);margin:6px 0 3px;}
+.dip-date{font-size:.68rem;color:#b05070;font-weight:700;}
+.win-btns{display:flex;flex-direction:column;gap:9px;width:100%;max-width:300px;}
+.win-btn{font-family:'Fredoka One',cursive;font-size:1rem;padding:12px 18px;
+  border:none;border-radius:999px;cursor:pointer;color:white;width:100%;transition:transform .15s;}
+.win-btn:hover{transform:scale(1.03);}
+.win-btn.dl{background:linear-gradient(135deg,var(--rosa),var(--drosa));}
+.win-btn.re{background:linear-gradient(135deg,var(--mint),#2ec98a);}
+
+@media(max-width:400px){.ans-btn{font-size:1.3rem;padding:12px 6px}}
+</style>
+</head>
+<body>
+<!-- BG CLOUDS -->
+<div class="cloud" style="width:90px;height:30px;top:8%;--cd:22s;animation-delay:-5s"><div style="position:absolute;width:50px;height:50px;background:white;border-radius:50%;top:-25px;left:15px"></div><div style="position:absolute;width:35px;height:35px;background:white;border-radius:50%;top:-18px;left:40px"></div></div>
+<div class="cloud" style="width:70px;height:24px;top:15%;--cd:30s;animation-delay:-12s"><div style="position:absolute;width:38px;height:38px;background:white;border-radius:50%;top:-19px;left:10px"></div></div>
+<div class="cloud" style="width:110px;height:34px;top:5%;--cd:38s;animation-delay:-20s"><div style="position:absolute;width:55px;height:55px;background:white;border-radius:50%;top:-28px;left:20px"></div><div style="position:absolute;width:42px;height:42px;background:white;border-radius:50%;top:-22px;left:55px"></div></div>
+
+<div class="confetti-wrap" id="confetti"></div>
+
+<!-- START -->
+<div class="start-screen" id="startScreen">
+  <div class="start-pig">🐷</div>
+  <div class="start-title">Peppa lernt die Uhr!</div>
+  <div class="start-sub">Hilf Peppa die Zeit zu lesen ⏰</div>
+  <div class="start-card">
+    <div>
+      <label class="sc-label">Dein Name</label>
+      <input class="sc-input" id="nameInput" type="text" placeholder="z.B. Lena" maxlength="30" autocomplete="off"/>
+    </div>
+    <div>
+      <label class="sc-label">Optionen</label>
+      <div class="toggle-row">
+        <label class="tw"><input type="checkbox" id="turboToggle"><span class="ts"></span></label>
+        <div><div class="tl">⚡ Turbo-Modus</div><div class="ts2">Mehr Punkte bei schneller Antwort</div></div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Los geht's! 🐷</button>
+  </div>
+</div>
+
+<!-- LEVEL UP -->
+<div class="lu-ov" id="luOv">
+  <div class="lu-pig"><svg id="luSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="lu-title" id="luTitle">🌟 Level 2!</div>
+  <div class="lu-upgrade" id="luUpgrade">✨ Neues Upgrade!</div>
+  <div class="lu-sub" id="luSub">Weiter so!</div>
+  <button class="lu-btn" onclick="closeLevelUp()">Weiter! 🐷</button>
+</div>
+
+<!-- WIN -->
+<div class="win-ov" id="winOv">
+  <div class="win-title">🏆 Du hast gewonnen!</div>
+  <div class="diploma-wrap" id="diplomaEl">
+    <div class="dip-head">🌟 Urkunde der Uhr-Magie 🌟</div>
+    <div style="font-size:.68rem;color:#b05070;font-weight:700">verliehen an</div>
+    <div class="dip-name" id="dipName">Uhr-Profi</div>
+    <div class="dip-pig"><svg id="dipSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="dip-text">hat alle <strong>10 Level</strong> gemeistert,<br>Peppa beim Uhrlesen geholfen<br>und bewiesen: Zeit ist Magie! ⏰✨</div>
+    <div class="dip-stats">
+      <div><div class="dsv" id="winScore">0</div><div class="dsl">Punkte</div></div>
+      <div><div class="dsv" id="winCorrect">0</div><div class="dsl">Richtig</div></div>
+    </div>
+    <div class="dip-seal">🏆</div>
+    <div class="dip-date" id="dipDate"></div>
+  </div>
+  <div class="win-btns">
+    <button class="win-btn dl" onclick="downloadPDF()">📄 Als PDF herunterladen</button>
+    <button class="win-btn re" onclick="restartGame()">🔄 Nochmal spielen</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>🐷 Peppa lernt die Uhr</h1>
+    <p id="headerSub">Lies die Uhr und hilf Peppa!</p>
+  </header>
+
+  <div class="hud">
+    <div class="hud-pill">⭐ <span class="val" id="score">0</span> Punkte</div>
+    <div class="hud-pill">🏅 Level <span class="val" id="levelDisp">1</span></div>
+    <div class="hud-pill">🔥 Streak <span class="val" id="streakDisp">0</span></div>
+  </div>
+
+  <div class="level-track">
+    <div class="lt-labels">
+      <span id="ltLabel">Level 1 – Volle Stunden</span>
+      <span id="ltProgress">0 / 8</span>
+    </div>
+    <div class="lt-bar"><div class="lt-fill" id="ltFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="pig-stage">
+    <div class="pig-wrap" id="pigWrap">
+      <svg id="mainSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+  <div class="upgrade-lbl" id="upgradeLabel">Basis-Peppa 🐷</div>
+  <div class="speech" id="speech">Was zeigt die Uhr? ⏰</div>
+
+  <div class="clock-card">
+    <div class="diff-badge" id="diffBadge" style="background:linear-gradient(135deg,#52d9a0,#2ec98a)">Volle Stunden 🕐</div>
+    <div class="clock-svg-wrap">
+      <svg id="clockSvg" width="200" height="200" viewBox="0 0 200 200"></svg>
+    </div>
+
+    <div class="timer-section" id="timerSection">
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+      <div class="timer-lbl" id="timerLbl"></div>
+    </div>
+
+    <div class="streak-row" id="streakRow"></div>
+  </div>
+
+  <div class="answers" id="answers"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+//  UPGRADES & PIG SVG
+// ═══════════════════════════════════
+const UPGRADES=[
+  {name:'Basis-Peppa 🐷',        desc:'Peppa ist bereit zum Üben!'},
+  {name:'Schleife 🎀',           desc:'Eine süsse Schleife im Haar!'},
+  {name:'Kleid 👗',              desc:'Das schönste Kleid von Peppa!'},
+  {name:'Gummistiefel 🥾',       desc:'Für Pfützen-Hüpfen bereit!'},
+  {name:'Regenschirm ☂️',        desc:'Wie Peppa im Regen tanzen!'},
+  {name:'Krone 👑',              desc:'Prinzessin Peppa!'},
+  {name:'Zauberstab 🪄',         desc:'Abrakadabra – Peppa zaubert!'},
+  {name:'Flügel 🧚',             desc:'Peppa kann fliegen!'},
+  {name:'Regenbogen 🌈',         desc:'Alles leuchtet in Farben!'},
+  {name:'UHRZEIT-MEISTER 🏆',    desc:'Du hast gewonnen! Fantastisch!'},
+];
+
+const SVG_ANIM=`<defs><style>
+  .bow{transform-origin:100px 58px;animation:bowWiggle 2s ease-in-out infinite alternate;}
+  @keyframes bowWiggle{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+  .wings{transform-origin:100px 120px;animation:wingFlap 1.6s ease-in-out infinite;}
+  @keyframes wingFlap{0%,100%{transform:scaleY(1)}40%{transform:scaleY(.8)}70%{transform:scaleY(1.05)}}
+  .wand-star{transform-origin:168px 62px;animation:wandSpin 2s linear infinite;}
+  @keyframes wandSpin{to{transform:rotate(360deg)}}
+  .umbrella{transform-origin:100px 40px;animation:umbrellaWave 2.5s ease-in-out infinite alternate;}
+  @keyframes umbrellaWave{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+  .crown-star{animation:crownBlink 1.5s ease-in-out infinite alternate;}
+  @keyframes crownBlink{from{opacity:.4}to{opacity:1}}
+  .rb-arc{animation:rbShift 3s linear infinite;}
+  @keyframes rbShift{0%{opacity:.7}50%{opacity:1}100%{opacity:.7}}
+  .boot{animation:bootBounce 1.2s ease-in-out infinite alternate;}
+  @keyframes bootBounce{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+</style></defs>`;
+
+function buildPig(level){
+  const hasBow      = level>=2;
+  const hasDress    = level>=3;
+  const hasBoots    = level>=4;
+  const hasUmbrella = level>=5;
+  const hasCrown    = level>=6;
+  const hasWand     = level>=7;
+  const hasWings    = level>=8;
+  const hasRainbow  = level>=9;
+
+  let s=SVG_ANIM;
+
+  // rainbow bg
+  if(hasRainbow){
+    const arcs=[
+      {r:95,c:'#ff6eb4',w:14},
+      {r:80,c:'#ff9f3f',w:12},
+      {r:67,c:'#ffdd57',w:11},
+      {r:56,c:'#52d9a0',w:10},
+      {r:46,c:'#5bc8f5',w:9},
+      {r:37,c:'#b56ef7',w:8},
+    ];
+    arcs.forEach(({r,c,w})=>
+      s+=`<path class="rb-arc" d="M${100-r} 140 A${r} ${r} 0 0 1 ${100+r} 140" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`
+    );
+  }
+
+  // wings (behind body)
+  if(hasWings){
+    s+=`<g class="wings">`;
+    s+=`<path d="M58 118 Q28 95 32 68 Q44 76 46 98 Q58 78 52 50 Q66 60 58 92 Q72 74 70 48 Q82 60 74 92" fill="#f9d5ff" opacity=".9"/>`;
+    s+=`<path d="M58 118 Q28 95 32 68 Q44 76 46 98" fill="none" stroke="#d8b4fe" stroke-width="1.5"/>`;
+    s+=`<path d="M142 118 Q172 95 168 68 Q156 76 154 98 Q142 78 148 50 Q134 60 142 92 Q128 74 130 48 Q118 60 126 92" fill="#f9d5ff" opacity=".9"/>`;
+    s+=`<path d="M142 118 Q172 95 168 68 Q156 76 154 98" fill="none" stroke="#d8b4fe" stroke-width="1.5"/>`;
+    s+=`</g>`;
+  }
+
+  // umbrella
+  if(hasUmbrella){
+    s+=`<g class="umbrella">`;
+    // handle
+    s+=`<path d="M150 50 Q168 50 168 62" fill="none" stroke="#b56ef7" stroke-width="4" stroke-linecap="round"/>`;
+    // canopy
+    s+=`<path d="M130 50 Q145 22 175 28 Q185 44 175 50 Q165 38 150 42 Q138 38 130 50 Z" fill="#ff8fab"/>`;
+    s+=`<path d="M130 50 Q140 36 155 36" fill="none" stroke="white" stroke-width="1.5" opacity=".5"/>`;
+    // stripes
+    s+=`<line x1="153" y1="23" x2="152" y2="50" stroke="white" stroke-width="1.5" opacity=".4"/>`;
+    s+=`<line x1="165" y1="25" x2="163" y2="50" stroke="white" stroke-width="1.5" opacity=".4"/>`;
+    s+=`</g>`;
+  }
+
+  // wand
+  if(hasWand){
+    s+=`<g>`;
+    s+=`<line x1="40" y1="145" x2="162" y2="65" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round"/>`;
+    s+=`<g class="wand-star">`;
+    s+=`<path d="M168 62 l2.5 6 l6 0 l-5 3.5 l2 6 l-5.5-3.5 l-5.5 3.5 l2-6 l-5-3.5 l6 0 z" fill="#fbbf24"/>`;
+    s+=`<path d="M168 62 l2.5 6 l6 0 l-5 3.5 l2 6 l-5.5-3.5 l-5.5 3.5 l2-6 l-5-3.5 l6 0 z" fill="white" opacity=".4"/>`;
+    s+=`</g></g>`;
+  }
+
+  // body — Peppa's signature round/chunky body
+  const bodyColor = hasDress ? '#ff8fab' : '#ffb3c6';
+  if(hasDress){
+    // dress
+    s+=`<ellipse cx="100" cy="148" rx="46" ry="38" fill="#ff6eb4"/>`;
+    // dress frill bottom
+    s+=`<path d="M56 158 Q70 168 84 160 Q92 170 100 162 Q108 170 116 160 Q130 168 144 158" fill="none" stroke="#ff85c8" stroke-width="3" stroke-linecap="round"/>`;
+    // dress highlight
+    s+=`<ellipse cx="88" cy="138" rx="14" ry="10" fill="white" opacity=".15"/>`;
+  } else {
+    s+=`<ellipse cx="100" cy="148" rx="46" ry="38" fill="${bodyColor}"/>`;
+  }
+
+  // head — big round kawaii
+  s+=`<circle cx="100" cy="90" r="48" fill="#ffb3c6"/>`;
+  // face highlight
+  s+=`<ellipse cx="88" cy="76" rx="16" ry="12" fill="white" opacity=".2"/>`;
+
+  // crown
+  if(hasCrown){
+    s+=`<path d="M70 62 L74 44 L84 54 L100 38 L116 54 L126 44 L130 62 Z" fill="#fbbf24"/>`;
+    s+=`<rect x="70" y="60" width="60" height="8" rx="4" fill="#f59e0b"/>`;
+    // crown gems
+    [[80,50,'#ef4444'],[100,44,'#3b82f6'],[120,50,'#22c55e']].forEach(([x,y,c])=>
+      s+=`<circle class="crown-star" cx="${x}" cy="${y}" r="4" fill="${c}"/>`
+    );
+  }
+
+  // bow
+  if(hasBow){
+    s+=`<g class="bow">`;
+    s+=`<path d="M84 58 Q76 48 68 52 Q66 62 76 64 Q84 62 84 58 Z" fill="#ff4d6d"/>`;
+    s+=`<path d="M116 58 Q124 48 132 52 Q134 62 124 64 Q116 62 116 58 Z" fill="#ff4d6d"/>`;
+    s+=`<circle cx="100" cy="58" r="7" fill="#ff6eb4"/>`;
+    s+=`<circle cx="100" cy="58" r="3.5" fill="white" opacity=".5"/>`;
+    s+=`</g>`;
+  }
+
+  // snout — Peppa's most iconic feature, turned up
+  s+=`<ellipse cx="100" cy="108" rx="26" ry="20" fill="#ff8fab"/>`;
+  s+=`<circle cx="92" cy="108" r="7" fill="#e05a7a" opacity=".6"/>`;
+  s+=`<circle cx="108" cy="108" r="7" fill="#e05a7a" opacity=".6"/>`;
+  // nostrils
+  s+=`<circle cx="92" cy="108" r="4" fill="#c44"/>`;
+  s+=`<circle cx="108" cy="108" r="4" fill="#c44"/>`;
+
+  // eyes — big kawaii
+  s+=`<circle cx="82" cy="80" r="11" fill="white"/>`;
+  s+=`<circle cx="82" cy="81" r="7" fill="#3d1a6e"/>`;
+  s+=`<circle cx="85" cy="78" r="2.5" fill="white"/>`;
+  s+=`<circle cx="118" cy="80" r="11" fill="white"/>`;
+  s+=`<circle cx="118" cy="81" r="7" fill="#3d1a6e"/>`;
+  s+=`<circle cx="121" cy="78" r="2.5" fill="white"/>`;
+
+  // smile
+  s+=`<path d="M86 98 Q100 108 114 98" fill="none" stroke="#e05a7a" stroke-width="3" stroke-linecap="round"/>`;
+  // cheeks
+  s+=`<ellipse cx="68" cy="92" rx="10" ry="7" fill="#ff6eb4" opacity=".4"/>`;
+  s+=`<ellipse cx="132" cy="92" rx="10" ry="7" fill="#ff6eb4" opacity=".4"/>`;
+
+  // ears
+  s+=`<circle cx="60" cy="52" r="18" fill="#ffb3c6"/>`;
+  s+=`<circle cx="60" cy="52" r="10" fill="#ff8fab"/>`;
+  s+=`<circle cx="140" cy="52" r="18" fill="#ffb3c6"/>`;
+  s+=`<circle cx="140" cy="52" r="10" fill="#ff8fab"/>`;
+
+  // legs/arms
+  s+=`<rect x="70" y="182" width="16" height="18" rx="8" fill="#ffb3c6"/>`;
+  s+=`<rect x="114" y="182" width="16" height="18" rx="8" fill="#ffb3c6"/>`;
+  s+=`<rect x="44" y="150" width="16" height="14" rx="8" fill="#ffb3c6"/>`;
+  s+=`<rect x="140" y="150" width="16" height="14" rx="8" fill="#ffb3c6"/>`;
+
+  // boots
+  if(hasBoots){
+    // left boot
+    s+=`<g class="boot">`;
+    s+=`<ellipse cx="78" cy="200" rx="13" ry="8" fill="#e05a7a"/>`;
+    s+=`<rect x="65" y="192" width="26" height="10" rx="5" fill="#ff6eb4"/>`;
+    s+=`</g>`;
+    // right boot (slight delay)
+    s+=`<g class="boot" style="animation-delay:.3s">`;
+    s+=`<ellipse cx="122" cy="200" rx="13" ry="8" fill="#e05a7a"/>`;
+    s+=`<rect x="109" y="192" width="26" height="10" rx="5" fill="#ff6eb4"/>`;
+    s+=`</g>`;
+  }
+
+  // tail — curly
+  s+=`<path d="M146 148 Q162 142 164 130 Q166 118 156 116 Q146 114 144 124" fill="none" stroke="#ffb3c6" stroke-width="5" stroke-linecap="round"/>`;
+
+  return s;
+}
+
+function renderPig(id,level){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=buildPig(level);
+}
+
+// ═══════════════════════════════════
+//  CLOCK SVG
+// ═══════════════════════════════════
+function drawClock(hours,minutes){
+  const svg=document.getElementById('clockSvg');
+  const cx=100,cy=100,r=88;
+
+  // face
+  let s=``;
+  // outer ring gradient
+  s+=`<defs>
+    <radialGradient id="cg" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="white"/>
+      <stop offset="100%" stop-color="#fff0f5"/>
+    </radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#ffb3c6" flood-opacity=".4"/></filter>
+  </defs>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ff8fab" filter="url(#shadow)"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r-6}" fill="url(#cg)"/>`;
+  // decorative ring
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r-4}" fill="none" stroke="#ffd6e0" stroke-width="2"/>`;
+
+  // hour marks
+  for(let i=0;i<12;i++){
+    const angle=(i*30-90)*Math.PI/180;
+    const isMain=i%3===0;
+    const r1=isMain?r-16:r-13, r2=isMain?r-24:r-19;
+    const x1=cx+r1*Math.cos(angle), y1=cy+r1*Math.sin(angle);
+    const x2=cx+r2*Math.cos(angle), y2=cy+r2*Math.sin(angle);
+    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${isMain?'#e05a7a':'#ffb3c6'}" stroke-width="${isMain?3:2}" stroke-linecap="round"/>`;
+  }
+
+  // hour numbers (1-12)
+  for(let i=1;i<=12;i++){
+    const angle=(i*30-90)*Math.PI/180;
+    const nr=r-34;
+    const x=cx+nr*Math.cos(angle), y=cy+nr*Math.sin(angle);
+    s+=`<text x="${x.toFixed(1)}" y="${(y+5).toFixed(1)}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="13" fill="#e05a7a" font-weight="bold">${i}</text>`;
+  }
+
+  // minute marks (small)
+  for(let i=0;i<60;i++){
+    if(i%5===0) continue;
+    const angle=(i*6-90)*Math.PI/180;
+    const r1=r-12, r2=r-16;
+    const x1=cx+r1*Math.cos(angle),y1=cy+r1*Math.sin(angle);
+    const x2=cx+r2*Math.cos(angle),y2=cy+r2*Math.sin(angle);
+    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#ffd6e0" stroke-width="1" stroke-linecap="round"/>`;
+  }
+
+  // hour hand
+  const ha=((hours%12+minutes/60)*30-90)*Math.PI/180;
+  const hLen=44;
+  s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+hLen*Math.cos(ha)).toFixed(1)}" y2="${(cy+hLen*Math.sin(ha)).toFixed(1)}" stroke="#e05a7a" stroke-width="7" stroke-linecap="round"/>`;
+
+  // minute hand
+  const ma=(minutes*6-90)*Math.PI/180;
+  const mLen=62;
+  s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+mLen*Math.cos(ma)).toFixed(1)}" y2="${(cy+mLen*Math.sin(ma)).toFixed(1)}" stroke="#ff8fab" stroke-width="5" stroke-linecap="round"/>`;
+
+  // center dot
+  s+=`<circle cx="${cx}" cy="${cy}" r="7" fill="#e05a7a"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="3.5" fill="white"/>`;
+
+  svg.innerHTML=s;
+}
+
+// ═══════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════
+let score=0,level=1,streak=0,answered=false;
+let turboMode=false,playerName='';
+const QPL=8;
+let questionInLevel=0,currentAnswer='',totalCorrect=0;
+let timerInterval=null,timerStart=0,timerDuration=10;
+let currentH=0,currentM=0;
+
+// difficulty by level
+// L1-3: full hours | L4-6: half hours | L7-8: quarter hours | L9-10: 10-min steps
+function getDifficulty(l){
+  if(l<=3)return'full';
+  if(l<=6)return'half';
+  if(l<=8)return'quarter';
+  return'ten';
+}
+
+const DIFF_LABELS={
+  full:'Volle Stunden 🕐',
+  half:'Halbe Stunden 🕧',
+  quarter:'Viertelstunden 🕒',
+  ten:'10-Minuten-Schritte ⏱️'
+};
+const DIFF_COLORS={
+  full:'linear-gradient(135deg,#52d9a0,#2ec98a)',
+  half:'linear-gradient(135deg,#5bc8f5,#2a9fd4)',
+  quarter:'linear-gradient(135deg,#b56ef7,#8b2fc9)',
+  ten:'linear-gradient(135deg,#f97316,#dc2626)'
+};
+
+const SPEECH_MSGS=[
+  'Was zeigt die Uhr? ⏰','Kannst du die Zeit lesen? 🐷','Wie spät ist es? ✨',
+  'Schau genau hin! 🌟','Welche Uhrzeit? 🕐'
+];
+const CORRECT=['Super! 🌟','Toll gemacht! 🐷','Wunderbar! ✨','Richtig! 🎉','Ja! Genau! 🌈','Fantastisch! 💫','Mega! Weiter so! ⭐'];
+const WRONG=["Fast! Versuch's nochmal 💪",'Nicht ganz – schau nochmal! 🐷','Nochmal! Du schaffst das! ✨','Schau auf die Zeiger! 🕐'];
+const TIMEOUT=['Zeit! Keine Sorge! ⏱️','Ups, Zeit abgelaufen! ⏰','Schneller beim nächsten! ⚡'];
+
+const LEVEL_NAMES=['','Volle Stunden','Volle Stunden','Volle Stunden',
+  'Halbe Stunden','Halbe Stunden','Halbe Stunden',
+  'Viertelstunden','Viertelstunden','10-Min-Schritte','10-Min-Schritte'];
+
+function formatTime(h,m){
+  return m===0?`${h}:00`:`${h}:${m<10?'0'+m:m}`;
+}
+
+function generateQuestion(){
+  const diff=getDifficulty(level);
+  const h=Math.floor(Math.random()*12)+1;
+  let m=0;
+  if(diff==='half') m=Math.random()<.5?0:30;
+  else if(diff==='quarter'){const opts=[0,15,30,45];m=opts[Math.floor(Math.random()*4)];}
+  else if(diff==='ten'){const opts=[0,10,20,30,40,50];m=opts[Math.floor(Math.random()*6)];}
+  return{h,m,answer:formatTime(h,m)};
+}
+
+function generateChoices(correct,h,m,diff){
+  const choices=new Set([correct]);
+  const allH=()=>Math.floor(Math.random()*12)+1;
+
+  let attempts=0;
+  while(choices.size<4&&attempts<80){
+    attempts++;
+    let nh=h,nm=m;
+    const r=Math.random();
+    if(r<.5){
+      // different hour, same minute pattern
+      nh=allH(); if(nh===h) nh=nh%12+1;
+    } else {
+      // same hour, different minute
+      if(diff==='half') nm=nm===0?30:0;
+      else if(diff==='quarter'){const opts=[0,15,30,45].filter(x=>x!==m);nm=opts[Math.floor(Math.random()*opts.length)];}
+      else if(diff==='ten'){const opts=[0,10,20,30,40,50].filter(x=>x!==m);nm=opts[Math.floor(Math.random()*opts.length)];}
+      else nm=0;
+    }
+    choices.add(formatTime(nh,nm));
+  }
+  // fallback fill
+  let fh=1;
+  while(choices.size<4){choices.add(formatTime(fh,m));fh++;}
+  return shuffle([...choices]);
+}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function setSpeech(msg){
+  const el=document.getElementById('speech');
+  el.style.animation='none';el.textContent=msg;
+  requestAnimationFrame(()=>el.style.animation='popIn .3s cubic-bezier(.34,1.56,.64,1)');
+}
+
+// TIMER
+function startTimer(){
+  clearInterval(timerInterval);timerStart=Date.now();
+  const fill=document.getElementById('timerFill'),lbl=document.getElementById('timerLbl');
+  fill.style.transition='none';fill.style.width='100%';fill.classList.remove('warn');
+  timerInterval=setInterval(()=>{
+    const el=(Date.now()-timerStart)/1000;
+    const pct=Math.max(0,100-el/timerDuration*100);
+    fill.style.transition='width .1s linear';fill.style.width=pct+'%';
+    lbl.textContent=`⚡ ${Math.ceil(timerDuration-el)}s`;
+    if(pct<35)fill.classList.add('warn');
+    if(el>=timerDuration){clearInterval(timerInterval);handleTimeout();}
+  },100);
+}
+function stopTimer(){clearInterval(timerInterval);return(Date.now()-timerStart)/1000;}
+function handleTimeout(){
+  if(answered)return;answered=true;streak=0;score+=2;questionInLevel++;
+  document.getElementById('score').textContent=score;
+  setSpeech(TIMEOUT[Math.floor(Math.random()*TIMEOUT.length)]);
+  document.getElementById('streakDisp').textContent=0;
+  document.getElementById('streakRow').textContent='';
+  document.getElementById('timerFill').style.width='0%';
+  document.getElementById('timerLbl').textContent='';
+  if(questionInLevel>=QPL)setTimeout(doLevelUp,900);else setTimeout(nextQuestion,900);
+}
+function calcPoints(el){return el<3?25:el<5?20:el<7?15:10;}
+
+function startGame(){
+  playerName=document.getElementById('nameInput').value.trim()||'Uhr-Profi';
+  turboMode=document.getElementById('turboToggle').checked;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('headerSub').textContent=`Hallo ${playerName}! Hilf Peppa die Zeit zu lesen!`;
+  if(turboMode) document.getElementById('timerSection').style.display='flex';
+  renderPig('mainSvg',1);
+  nextQuestion();
+}
+
+function nextQuestion(){
+  answered=false;
+  const q=generateQuestion();
+  currentH=q.h;currentM=q.m;currentAnswer=q.answer;
+  drawClock(q.h,q.m);
+  const diff=getDifficulty(level);
+  document.getElementById('diffBadge').textContent=DIFF_LABELS[diff];
+  document.getElementById('diffBadge').style.background=DIFF_COLORS[diff];
+  setSpeech(SPEECH_MSGS[Math.floor(Math.random()*SPEECH_MSGS.length)]);
+  const choices=generateChoices(q.answer,q.h,q.m,diff);
+  const cont=document.getElementById('answers');cont.innerHTML='';
+  choices.forEach(c=>{
+    const btn=document.createElement('button');btn.className='ans-btn';btn.textContent=c;
+    btn.onclick=()=>handleAnswer(c,btn);cont.appendChild(btn);
+  });
+  document.getElementById('ltFill').style.width=(questionInLevel/QPL*100)+'%';
+  document.getElementById('ltProgress').textContent=`${questionInLevel} / ${QPL}`;
+  document.getElementById('ltLabel').textContent=`Level ${level} – ${LEVEL_NAMES[level]||''}`;
+  if(turboMode)startTimer();
+}
+
+function handleAnswer(val,btn){
+  if(answered)return;answered=true;
+  let elapsed=0;if(turboMode)elapsed=stopTimer();
+  if(val===currentAnswer){
+    streak++;totalCorrect++;
+    const pts=turboMode?calcPoints(elapsed):(10+(streak>1?streak*2:0));
+    score+=pts;questionInLevel++;
+    btn.classList.add('correct');
+    const bonus=turboMode&&elapsed<3?' ⚡ Blitz!':turboMode&&elapsed<5?' 🚀 Schnell!':'';
+    setSpeech(CORRECT[Math.floor(Math.random()*CORRECT.length)]+bonus);
+    flashPig('happy');spawnConfetti(28);
+    document.getElementById('score').textContent=score;
+    document.getElementById('streakDisp').textContent=streak;
+    if(streak>=3) document.getElementById('streakRow').textContent=`🔥 ${streak}x Streak!`;
+    else if(streak>0) document.getElementById('streakRow').textContent=`✨ ${streak} richtig!`;
+    if(questionInLevel>=QPL)setTimeout(doLevelUp,700);else setTimeout(nextQuestion,900);
+  } else {
+    streak=0;
+    document.getElementById('streakDisp').textContent=0;
+    document.getElementById('streakRow').textContent='';
+    btn.classList.add('wrong');
+    setSpeech(WRONG[Math.floor(Math.random()*WRONG.length)]);
+    flashPig('sad');
+    if(turboMode)startTimer();
+    setTimeout(()=>{btn.classList.remove('wrong');answered=false;},600);
+  }
+}
+
+function flashPig(mood){
+  const w=document.getElementById('pigWrap');
+  w.style.filter=mood==='happy'?'drop-shadow(0 0 32px rgba(255,215,0,.9))':'drop-shadow(0 0 20px rgba(239,68,68,.6))';
+  setTimeout(()=>w.style.filter='drop-shadow(0 6px 20px rgba(255,143,171,.4))',600);
+}
+
+function doLevelUp(){
+  clearInterval(timerInterval);
+  const next=level+1;
+  if(next>10){showWin();return;}
+  level=next;questionInLevel=0;
+  document.getElementById('levelDisp').textContent=level;
+  document.getElementById('upgradeLabel').textContent=UPGRADES[level-1].name;
+  renderPig('mainSvg',level);renderPig('luSvg',level);
+  document.getElementById('luTitle').textContent=`🌟 Level ${level}!`;
+  document.getElementById('luUpgrade').textContent=`✨ Neu: ${UPGRADES[level-1].name}`;
+  document.getElementById('luSub').textContent=UPGRADES[level-1].desc;
+  document.getElementById('luOv').classList.add('show');
+  spawnConfetti(70);
+}
+function closeLevelUp(){
+  document.getElementById('luOv').classList.remove('show');
+  nextQuestion();
+}
+
+function showWin(){
+  clearInterval(timerInterval);
+  const now=new Date();
+  document.getElementById('dipDate').textContent=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('dipName').textContent=playerName;
+  document.getElementById('winScore').textContent=score;
+  document.getElementById('winCorrect').textContent=totalCorrect;
+  renderPig('dipSvg',10);
+  document.getElementById('winOv').classList.add('show');
+  spawnConfetti(110);
+}
+
+async function downloadPDF(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  const turboTag=turboMode?`<div style="background:#ffe0f0;border-radius:10px;padding:8px 16px;display:inline-block;margin:0 6px"><div style="font-size:1.4rem">⚡</div><div style="font-size:.65rem;color:#e05a7a;font-weight:800">TURBO</div></div>`:'';
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;left:-9999px;top:0;width:560px;background:white;font-family:Nunito,sans-serif;';
+  el.innerHTML=`
+    <div style="padding:32px;background:white;border-radius:20px;text-align:center;
+      border:8px solid transparent;background:linear-gradient(white,white) padding-box,
+      linear-gradient(135deg,#ffdd57,#ff8fab,#b56ef7,#52d9a0,#5bc8f5,#ffdd57) border-box;">
+      <div style="position:absolute;inset:14px;border:2px dashed rgba(255,143,171,.3);border-radius:12px;pointer-events:none"></div>
+      <div style="font-size:2.2rem;margin-bottom:6px">⏰ 🐷 ⏰</div>
+      <div style="font-family:'Fredoka One',cursive;font-weight:900;font-size:1.6rem;color:#e05a7a;margin-bottom:3px">🌟 Urkunde der Uhr-Magie 🌟</div>
+      <div style="font-size:.8rem;color:#b05070;font-weight:700;margin-bottom:6px">verliehen an</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2.8rem;color:#e05a7a;line-height:1.1;margin-bottom:10px">${playerName}</div>
+      <div style="font-size:5rem;line-height:1;margin:8px 0">🐷</div>
+      <div style="width:80%;height:2px;background:linear-gradient(90deg,transparent,#ffb3c6,transparent);margin:14px auto"></div>
+      <div style="font-size:1rem;color:#5a3a8a;font-weight:700;line-height:1.8;margin:10px 0">
+        hat alle <strong>10 Level</strong> gemeistert,<br>
+        Peppa beim Uhrlesen geholfen<br>
+        und bewiesen: Zeit lesen ist pure Magie! ⏰✨
+      </div>
+      <div style="display:flex;justify-content:center;gap:12px;margin:16px 0;flex-wrap:wrap">
+        <div style="background:#ffe0f0;border-radius:12px;padding:10px 24px;min-width:90px">
+          <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#e05a7a">${score}</div>
+          <div style="font-size:.65rem;color:#b05070;font-weight:800;letter-spacing:.5px">PUNKTE</div>
+        </div>
+        <div style="background:#ffe0f0;border-radius:12px;padding:10px 24px;min-width:90px">
+          <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:#e05a7a">${totalCorrect}</div>
+          <div style="font-size:.65rem;color:#b05070;font-weight:800;letter-spacing:.5px">RICHTIG</div>
+        </div>
+        ${turboTag}
+      </div>
+      <div style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#ffdd57,#f0a800);display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin:4px auto 10px;box-shadow:0 4px 14px rgba(240,168,0,.4);border:4px solid white">🏆</div>
+      <div style="width:80%;height:1px;background:linear-gradient(90deg,transparent,#ffb3c6,transparent);margin:10px auto"></div>
+      <div style="font-size:.75rem;color:#b05070;font-weight:700;margin-top:8px">${dateStr}</div>
+      <div style="font-size:.7rem;color:#ff8fab;margin-top:4px">🐷 Peppa lernt die Uhr</div>
+    </div>`;
+  document.body.appendChild(el);
+  try{
+    const canvas=await html2canvas(el.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+    document.body.removeChild(el);
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,H=297,imgW=W-20,imgH=canvas.height*(imgW/canvas.width);
+    doc.addImage(canvas.toDataURL('image/png'),'PNG',10,Math.max(10,(H-imgH)/2),imgW,imgH);
+    doc.save(`Urkunde_${playerName.replace(/\s+/g,'_')}_Uhr.pdf`);
+  }catch(e){document.body.removeChild(el);alert('Fehler beim PDF. Nochmal versuchen.');console.error(e);}
+}
+
+function restartGame(){
+  clearInterval(timerInterval);
+  score=0;level=1;streak=0;answered=false;questionInLevel=0;totalCorrect=0;
+  document.getElementById('score').textContent=0;
+  document.getElementById('levelDisp').textContent=1;
+  document.getElementById('streakDisp').textContent=0;
+  document.getElementById('streakRow').textContent='';
+  document.getElementById('upgradeLabel').textContent=UPGRADES[0].name;
+  document.getElementById('ltFill').style.width='0%';
+  document.getElementById('timerFill').style.width='100%';
+  document.getElementById('timerLbl').textContent='';
+  document.getElementById('winOv').classList.remove('show');
+  document.getElementById('startScreen').classList.remove('hidden');
+}
+
+// CONFETTI
+const CC=['#ff8fab','#ffd6e0','#ffdd57','#52d9a0','#5bc8f5','#b56ef7','#ff6eb4'];
+function spawnConfetti(n=30){
+  const w=document.getElementById('confetti');
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='cp';const sz=6+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*15-5}%;width:${sz}px;height:${sz}px;background:${CC[Math.floor(Math.random()*CC.length)]};border-radius:${Math.random()<.5?'50%':'3px'};--fd:${.8+Math.random()*1.5}s;--dl:${Math.random()*.4}s;`;
+    w.appendChild(p);setTimeout(()=>p.remove(),2500);
+  }
+}
+</script>
+</body>
+</html>
