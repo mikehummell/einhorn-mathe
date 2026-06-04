@@ -3,815 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🦄 Einhorn Mathe-Zauber</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<title>🌟 Lern-Spielplatz</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --pink:#ff6eb4;--purple:#a855f7;--lavender:#c084fc;
-    --gold:#fbbf24;--mint:#34d399;--sky:#60a5fa;
-    --bg:#1a0a2e;--card:#2d1558;--card2:#3d1f6e;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Baloo 2',cursive;background:var(--bg);min-height:100vh;overflow-x:hidden;color:white;}
+:root{
+  --bg1:#1a0a2e; --bg2:#0a1a3e;
+  --pink:#ff6eb4; --purple:#a855f7; --sky:#60a5fa;
+  --mint:#34d399; --gold:#fbbf24; --coral:#ff7e6b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  min-height:100vh; color:white; overflow-x:hidden;
+}
 
-  .stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
-  .star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d) ease-in-out infinite alternate;}
-  @keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:1;transform:scale(1.2)}}
+/* starfield */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d) ease-in-out infinite alternate;}
+@keyframes twinkle{from{opacity:.1;transform:scale(.8)}to{opacity:1;transform:scale(1.3)}}
 
-  /* START SCREEN */
-  .start-screen{position:fixed;inset:0;z-index:400;background:var(--bg);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;}
-  .start-screen.hidden{display:none;}
-  .start-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(2rem,8vw,3.5rem);
-    background:linear-gradient(135deg,#ff6eb4,#c084fc,#60a5fa,#34d399,#fbbf24);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    text-align:center;filter:drop-shadow(0 0 20px rgba(168,85,247,.6));}
-  .start-unicorn{font-size:5rem;animation:floatEl 2s ease-in-out infinite;}
-  @keyframes floatEl{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-  .start-card{background:var(--card);border:2px solid rgba(192,132,252,.5);border-radius:24px;
-    padding:26px 28px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:15px;}
-  .start-card label{font-size:.8rem;color:var(--lavender);font-weight:700;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;}
-  .start-input{font-family:'Nunito',sans-serif;font-weight:700;font-size:1.2rem;
-    background:var(--card2);border:2px solid rgba(192,132,252,.4);border-radius:12px;
-    color:white;padding:11px 14px;outline:none;width:100%;transition:border-color .2s;}
-  .start-input:focus{border-color:var(--lavender);}
-  .start-input::placeholder{color:rgba(192,132,252,.4);}
-  .toggle-row{display:flex;align-items:center;gap:12px;}
-  .toggle-wrap{position:relative;width:50px;height:26px;flex-shrink:0;}
-  .toggle-wrap input{opacity:0;width:0;height:0;}
-  .toggle-slider{position:absolute;inset:0;background:#3d1f6e;border-radius:999px;cursor:pointer;transition:.3s;}
-  .toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:4px;top:4px;background:var(--lavender);border-radius:50%;transition:.3s;}
-  .toggle-wrap input:checked+.toggle-slider{background:linear-gradient(135deg,var(--pink),var(--purple));}
-  .toggle-wrap input:checked+.toggle-slider::before{transform:translateX(24px);background:white;}
-  .toggle-label{font-size:.9rem;font-weight:700;color:var(--lavender);}
-  .toggle-sub{font-size:.72rem;color:rgba(192,132,252,.55);}
-  .start-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.2rem;padding:14px;
-    border:none;border-radius:14px;background:linear-gradient(135deg,var(--pink),var(--purple));
-    color:white;cursor:pointer;box-shadow:0 0 30px rgba(255,110,180,.4);transition:transform .15s;}
-  .start-btn:hover{transform:scale(1.04);}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:32px 16px 48px;gap:28px;max-width:520px;margin:0 auto;}
 
-  /* HEADER */
-  header{position:relative;z-index:10;text-align:center;padding:18px 20px 8px;}
-  header h1{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(1.6rem,5vw,2.6rem);
-    background:linear-gradient(135deg,#ff6eb4,#c084fc,#60a5fa,#34d399,#fbbf24);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    filter:drop-shadow(0 0 20px rgba(168,85,247,.6));}
-  header p{color:var(--lavender);font-size:.85rem;margin-top:2px;}
+/* header */
+.header{text-align:center;}
+.title{font-family:'Fredoka One',cursive;font-size:clamp(2rem,8vw,3rem);
+  background:linear-gradient(135deg,var(--pink),var(--purple),var(--sky),var(--mint));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 24px rgba(168,85,247,.5));line-height:1.1;}
+.subtitle{font-size:.95rem;color:rgba(192,132,252,.8);font-weight:700;margin-top:6px;}
 
-  /* HUD */
-  .hud{position:relative;z-index:10;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 14px 8px;}
-  .hud-card{background:var(--card);border:2px solid rgba(168,85,247,.4);border-radius:13px;
-    padding:6px 13px;text-align:center;min-width:76px;}
-  .hud-card .label{font-size:.62rem;color:var(--lavender);text-transform:uppercase;letter-spacing:1px;}
-  .hud-card .value{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.4rem;color:var(--gold);}
-  .stars-display{font-size:1rem;line-height:1;margin-top:1px;}
+/* grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;}
 
-  /* GAME */
-  .game-area{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;padding:0 14px 40px;gap:14px;}
+/* card */
+.card{
+  background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.1);
+  border-radius:24px;padding:22px 16px 18px;
+  text-align:center;cursor:pointer;
+  text-decoration:none;color:white;
+  transition:transform .2s,box-shadow .2s,border-color .2s,background .2s;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(160deg,rgba(255,255,255,.08),transparent);
+  pointer-events:none;
+}
+.card:hover{
+  transform:translateY(-6px) scale(1.03);
+  border-color:rgba(255,255,255,.3);
+  background:rgba(255,255,255,.1);
+}
+.card:active{transform:scale(.97);}
 
-  .unicorn-wrap{width:190px;height:190px;filter:drop-shadow(0 0 30px rgba(255,110,180,.5));animation:unicornFloat 3s ease-in-out infinite;}
-  .unicorn-wrap svg{width:100%;height:100%;overflow:visible;}
-  @keyframes unicornFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-  @keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
-  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.card-emoji{font-size:3.4rem;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));
+  animation:emojiFloat var(--ef,3s) ease-in-out infinite;}
+@keyframes emojiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
-  .bubble{background:white;color:#1a0a2e;border-radius:20px;padding:9px 15px;
-    font-size:.95rem;font-weight:700;max-width:290px;text-align:center;
-    box-shadow:0 8px 32px rgba(0,0,0,.3);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
-    min-height:42px;display:flex;align-items:center;justify-content:center;position:relative;}
-  .bubble::after{content:'';position:absolute;top:-12px;left:50%;transform:translateX(-50%);
-    border:6px solid transparent;border-bottom-color:white;}
-  @keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.card-title{font-family:'Fredoka One',cursive;font-size:1.1rem;line-height:1.2;}
+.card-desc{font-size:.72rem;font-weight:700;opacity:.7;line-height:1.4;}
+.card-age{font-size:.65rem;font-weight:800;padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.12);margin-top:2px;opacity:.8;}
 
-  .upgrade-label{font-size:.76rem;color:var(--gold);font-weight:700;text-align:center;min-height:17px;}
+/* color accents per card */
+.card.unicorn{box-shadow:0 0 30px rgba(255,110,180,.15);}
+.card.unicorn:hover{box-shadow:0 8px 40px rgba(255,110,180,.35);border-color:var(--pink);}
+.card.unicorn .card-title{color:var(--pink);}
 
-  /* TIMER */
-  .timer-section{width:100%;max-width:420px;display:none;flex-direction:column;gap:3px;}
-  .timer-wrap{height:10px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;}
-  .timer-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--mint),var(--sky));
-    transition:width .1s linear,background .3s;box-shadow:0 0 8px rgba(52,211,153,.5);}
-  .timer-fill.warn{background:linear-gradient(90deg,#f97316,#ef4444);box-shadow:0 0 8px rgba(239,68,68,.5);}
-  .timer-label{font-size:.72rem;color:var(--lavender);font-weight:700;text-align:right;min-height:15px;}
+.card.peppa{box-shadow:0 0 30px rgba(255,143,171,.15);}
+.card.peppa:hover{box-shadow:0 8px 40px rgba(255,143,171,.35);border-color:#ff8fab;}
+.card.peppa .card-title{color:#ff8fab;}
 
-  .task-card{background:linear-gradient(135deg,var(--card),var(--card2));
-    border:2px solid rgba(192,132,252,.5);border-radius:26px;padding:22px 28px;
-    text-align:center;width:100%;max-width:420px;
-    box-shadow:0 0 40px rgba(168,85,247,.25),inset 0 1px 0 rgba(255,255,255,.1);}
-  .task-type-badge{display:inline-block;background:linear-gradient(135deg,var(--pink),var(--purple));
-    border-radius:999px;padding:3px 13px;font-size:.7rem;font-weight:700;
-    text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-  .equation{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(2.5rem,11vw,4.5rem);
-    color:white;letter-spacing:4px;line-height:1;text-shadow:0 0 40px rgba(255,110,180,.4);}
-  .equation .op-plus{color:var(--mint);}
-  .equation .op-minus{color:var(--sky);}
-  .equation .blank{display:inline-block;min-width:64px;border-bottom:5px solid var(--gold);color:var(--gold);}
+.card.pingu{box-shadow:0 0 30px rgba(91,200,245,.15);}
+.card.pingu:hover{box-shadow:0 8px 40px rgba(91,200,245,.35);border-color:var(--sky);}
+.card.pingu .card-title{color:var(--sky);}
 
-  .answers{display:grid;grid-template-columns:1fr 1fr;gap:11px;width:100%;max-width:360px;}
-  .ans-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.85rem;padding:15px 8px;
-    border:3px solid rgba(192,132,252,.4);border-radius:19px;background:var(--card);color:white;
-    cursor:pointer;transition:transform .15s,background .15s,border-color .15s,box-shadow .15s;position:relative;overflow:hidden;}
-  .ans-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.05),transparent);border-radius:inherit;}
-  .ans-btn:hover{transform:scale(1.07) translateY(-3px);background:var(--card2);border-color:var(--lavender);box-shadow:0 8px 24px rgba(168,85,247,.4);}
-  .ans-btn:active{transform:scale(.97);}
-  .ans-btn.correct{background:linear-gradient(135deg,#065f46,#059669);border-color:var(--mint);box-shadow:0 0 30px rgba(52,211,153,.5);animation:correctPop .4s cubic-bezier(.34,1.56,.64,1);}
-  .ans-btn.wrong{background:linear-gradient(135deg,#7f1d1d,#dc2626);border-color:#f87171;animation:shake .4s ease;}
+.card.wuff{box-shadow:0 0 30px rgba(229,57,53,.15);}
+.card.wuff:hover{box-shadow:0 8px 40px rgba(229,57,53,.35);border-color:var(--coral);}
+.card.wuff .card-title{color:var(--coral);}
 
-  .confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:100;}
-  .confetti-p{position:absolute;border-radius:2px;animation:fall var(--fd) ease-in var(--fdelay) forwards;opacity:0;}
-  @keyframes fall{0%{transform:translateY(-20px) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(100vh) rotate(720deg) scale(.4);opacity:0}}
+/* NEW badge */
+.new-badge{position:absolute;top:10px;right:10px;
+  background:linear-gradient(135deg,var(--gold),var(--coral));
+  font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:999px;
+  color:white;text-transform:uppercase;letter-spacing:.5px;}
 
-  .progress-bar-wrap{width:100%;max-width:420px;height:9px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;}
-  .progress-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pink),var(--purple),var(--sky));transition:width .5s cubic-bezier(.34,1.2,.64,1);box-shadow:0 0 10px rgba(168,85,247,.6);}
-  .streak{font-size:.88rem;color:var(--gold);font-weight:700;min-height:19px;}
-  .mode-wrap{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;}
-  .mode-btn{font-family:'Baloo 2',cursive;font-size:.78rem;font-weight:600;padding:5px 13px;
-    border:2px solid rgba(192,132,252,.3);border-radius:999px;background:transparent;
-    color:var(--lavender);cursor:pointer;transition:all .2s;}
-  .mode-btn.active,.mode-btn:hover{background:linear-gradient(135deg,var(--pink),var(--purple));border-color:transparent;color:white;}
+/* footer */
+.footer{font-size:.72rem;color:rgba(255,255,255,.25);font-weight:700;text-align:center;}
 
-  /* LEVEL UP */
-  .levelup-overlay{position:fixed;inset:0;background:rgba(10,3,24,.9);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;gap:11px;padding:20px;}
-  .levelup-overlay.show{opacity:1;pointer-events:all;}
-  .lu-unicorn{width:150px;height:150px;animation:unicornFloat 1.5s ease-in-out infinite;}
-  .lu-unicorn svg{width:100%;height:100%;overflow:visible;}
-  .levelup-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(2rem,9vw,3.8rem);
-    background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    animation:pulseGold 1s ease-in-out infinite alternate;text-align:center;}
-  @keyframes pulseGold{from{filter:drop-shadow(0 0 10px #f59e0b)}to{filter:drop-shadow(0 0 40px #fbbf24)}}
-  .levelup-upgrade{background:rgba(255,255,255,.08);border:2px solid var(--gold);border-radius:13px;
-    padding:8px 20px;font-size:.95rem;font-weight:700;color:var(--gold);text-align:center;}
-  .levelup-sub{font-size:.95rem;color:var(--lavender);text-align:center;}
-  .levelup-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem;padding:12px 38px;
-    border:none;border-radius:999px;background:linear-gradient(135deg,var(--pink),var(--purple));
-    color:white;cursor:pointer;box-shadow:0 0 30px rgba(255,110,180,.5);transition:transform .15s;}
-  .levelup-btn:hover{transform:scale(1.06);}
-
-  /* WIN */
-  .win-overlay{position:fixed;inset:0;background:var(--bg);
-    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-    overflow-y:auto;z-index:300;opacity:0;pointer-events:none;transition:opacity .4s;padding:18px 14px 40px;gap:13px;}
-  .win-overlay.show{opacity:1;pointer-events:all;}
-  .win-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(1.7rem,7vw,2.8rem);
-    background:linear-gradient(135deg,#fbbf24,#ff6eb4,#a855f7);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;}
-  .diploma-preview{background:white;border-radius:22px;padding:22px 18px;max-width:400px;width:100%;
-    color:#1a0a2e;text-align:center;position:relative;border:5px solid transparent;background-clip:padding-box;}
-  .diploma-preview::before{content:'';position:absolute;inset:-5px;border-radius:26px;z-index:-1;
-    background:linear-gradient(135deg,#fbbf24,#ff6eb4,#a855f7,#60a5fa,#34d399,#fbbf24);
-    background-size:300% 300%;animation:rainbowBorder 3s linear infinite;}
-  @keyframes rainbowBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
-  .dp-header{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;color:#3d1a6e;margin-bottom:3px;}
-  .dp-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.9rem;
-    background:linear-gradient(135deg,#e0559a,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:5px 0;}
-  .dp-unicorn{width:100px;height:100px;margin:0 auto;animation:unicornFloat 2s ease-in-out infinite;}
-  .dp-unicorn svg{width:100%;height:100%;overflow:visible;}
-  .dp-text{font-size:.82rem;color:#5a3a8a;font-weight:700;line-height:1.6;margin:7px 0;}
-  .dp-stats{display:flex;justify-content:center;gap:22px;margin:7px 0;}
-  .dp-stat-val{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.6rem;color:#a855f7;}
-  .dp-stat-lbl{font-size:.62rem;color:#9a6bbf;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
-  .dp-seal{display:inline-flex;align-items:center;justify-content:center;
-    width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);
-    font-size:1.5rem;box-shadow:0 4px 16px rgba(245,158,11,.4);border:3px solid white;margin:5px 0 3px;}
-  .dp-date{font-size:.68rem;color:#9a6bbf;font-weight:700;}
-  .win-btns{display:flex;flex-direction:column;gap:9px;width:100%;max-width:300px;}
-  .win-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;padding:12px 18px;
-    border:none;border-radius:999px;cursor:pointer;color:white;transition:transform .15s;width:100%;}
-  .win-btn:hover{transform:scale(1.04);}
-  .win-btn.dl{background:linear-gradient(135deg,var(--pink),var(--purple));box-shadow:0 6px 24px rgba(168,85,247,.4);}
-  .win-btn.restart{background:linear-gradient(135deg,var(--mint),#059669);}
-
-  @media(max-width:480px){.task-card{padding:18px 14px}.ans-btn{font-size:1.55rem;padding:13px 7px}}
+@media(max-width:360px){.grid{grid-template-columns:1fr;}.card{padding:18px 14px 16px;}}
 </style>
 </head>
 <body>
 <div class="stars" id="stars"></div>
-<div class="confetti-wrap" id="confetti"></div>
 
-<!-- START -->
-<div class="start-screen" id="startScreen">
-  <div class="start-unicorn">🦄</div>
-  <div class="start-title">Einhorn Mathe-Zauber</div>
-  <div class="start-card">
-    <div>
-      <label>Dein Name</label>
-      <input class="start-input" id="nameInput" type="text" placeholder="z.B. Lena" maxlength="30" autocomplete="off"/>
-    </div>
-    <div>
-      <label>Modus</label>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px;">
-        <button class="mode-btn active" id="startModeAll"   onclick="setStartMode('all')">➕➖ Beides</button>
-        <button class="mode-btn"        id="startModePlus"  onclick="setStartMode('plus')">➕ Addition</button>
-        <button class="mode-btn"        id="startModeMinus" onclick="setStartMode('minus')">➖ Subtraktion</button>
-      </div>
-    </div>
-    <div>
-      <label>Optionen</label>
-      <div class="toggle-row">
-        <label class="toggle-wrap"><input type="checkbox" id="turboToggle"><span class="toggle-slider"></span></label>
-        <div><div class="toggle-label">⚡ Turbo-Modus</div><div class="toggle-sub">Mehr Punkte bei schneller Antwort</div></div>
-      </div>
-    </div>
-    <button class="start-btn" onclick="startGame()">Los geht's! 🚀</button>
-  </div>
-</div>
-
-<!-- LEVEL UP -->
-<div class="levelup-overlay" id="levelupOverlay">
-  <div class="lu-unicorn"><svg id="luSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
-  <div class="levelup-title" id="levelupTitle">🌟 Level 2!</div>
-  <div class="levelup-upgrade" id="levelupUpgrade">✨ Neues Upgrade!</div>
-  <div class="levelup-sub" id="levelupSub">Weiter so!</div>
-  <button class="levelup-btn" onclick="closeLevelUp()">Weiter ✨</button>
-</div>
-
-<!-- WIN -->
-<div class="win-overlay" id="winOverlay">
-  <div class="win-title">🏆 Du hast gewonnen!</div>
-  <div class="diploma-preview">
-    <div class="dp-header">🌟 Urkunde der Mathe-Magie 🌟</div>
-    <div style="font-size:.68rem;color:#9a6bbf;font-weight:700;">verliehen an</div>
-    <div class="dp-name" id="dpName">Mathe-Einhorn</div>
-    <div class="dp-unicorn"><svg id="diplomaSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
-    <div class="dp-text">hat alle <strong>10 Level</strong> gemeistert,<br>das Einhorn Stella in ein <strong>Weltraum-Einhorn</strong> verwandelt<br>und bewiesen: Rechnen ist pure Magie! ✨</div>
-    <div class="dp-stats">
-      <div><div class="dp-stat-val" id="winScore">0</div><div class="dp-stat-lbl">Punkte</div></div>
-      <div><div class="dp-stat-val" id="winCorrect">0</div><div class="dp-stat-lbl">Richtig</div></div>
-    </div>
-    <div class="dp-seal">🏆</div>
-    <div class="dp-date" id="dpDate"></div>
-  </div>
-  <div class="win-btns">
-    <button class="win-btn dl" onclick="downloadPDF()">📄 Als PDF herunterladen</button>
-    <button class="win-btn restart" onclick="restartGame()">🔄 Nochmal spielen</button>
-  </div>
-</div>
-
-<header>
-  <h1>🦄 Einhorn Mathe-Zauber</h1>
-  <p id="headerSub">Rechne richtig und hilf Stella fliegen!</p>
-</header>
-
-<div class="hud">
-  <div class="hud-card"><div class="label">Punkte</div><div class="value" id="score">0</div></div>
-  <div class="hud-card"><div class="label">Level</div><div class="value" id="levelDisp">1</div></div>
-  <div class="hud-card"><div class="label">Sterne</div><div class="stars-display" id="starDisplay">☆☆☆☆☆</div></div>
-</div>
-
-<div class="game-area">
-  <div class="mode-wrap">
-    <button class="mode-btn active" id="modeAll"   onclick="setMode('all')">➕➖ Beides</button>
-    <button class="mode-btn"        id="modePlus"  onclick="setMode('plus')">➕ Addition</button>
-    <button class="mode-btn"        id="modeMinus" onclick="setMode('minus')">➖ Subtraktion</button>
-  </div>
-  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
-  <div class="streak" id="streak"></div>
-
-  <div class="unicorn-wrap" id="unicornWrap">
-    <svg id="mainSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
-  </div>
-  <div class="upgrade-label" id="upgradeLabel">Basis-Einhorn 🦄</div>
-  <div class="bubble" id="bubble">Was ist das Ergebnis? 🌟</div>
-
-  <div class="timer-section" id="timerSection">
-    <div class="timer-wrap"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
-    <div class="timer-label" id="timerLabel"></div>
+<div class="wrap">
+  <div class="header">
+    <div class="title">🌟 Lern-Spielplatz</div>
+    <div class="subtitle">Wähle dein Spiel!</div>
   </div>
 
-  <div class="task-card">
-    <div class="task-type-badge" id="taskBadge">Addition ➕</div>
-    <div class="equation" id="equation"></div>
+  <div class="grid">
+
+    <a class="card unicorn" href="index.html" style="--ef:2.8s">
+      <div class="card-emoji">🦄</div>
+      <div class="card-title">Einhorn Mathe-Zauber</div>
+      <div class="card-desc">Addition & Subtraktion bis 20</div>
+      <div class="card-age">👧 ab 6 Jahren</div>
+    </a>
+
+    <a class="card peppa" href="uhr-lernen.html" style="--ef:3.2s">
+      <div class="card-emoji">🐷</div>
+      <div class="card-title">Peppa lernt die Uhr</div>
+      <div class="card-desc">Volle Stunden bis 10-Minuten-Schritte</div>
+      <div class="card-age">👧 ab 6 Jahren</div>
+    </a>
+
+    <a class="card pingu" href="pingu-zaehlen.html" style="--ef:3.6s">
+      <div class="card-emoji">🐧</div>
+      <div class="card-title">Pingu zählt!</div>
+      <div class="card-desc">Zählen von 1 bis 5</div>
+      <div class="card-age">👶 ab 3 Jahren</div>
+    </a>
+
+    <a class="card wuff" href="wuff-patrol.html" style="--ef:3s">
+      <div class="new-badge">Neu</div>
+      <div class="card-emoji">🐕</div>
+      <div class="card-title">Wuff-Patrol</div>
+      <div class="card-desc">Buchstaben lernen & b/d-Trick</div>
+      <div class="card-age">👧 ab 6 Jahren</div>
+    </a>
+
   </div>
-  <div class="answers" id="answers"></div>
+
+  <div class="footer">Viel Spass beim Lernen! 🌟</div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  SVG BUILDER  — original unicorn + animated addons
-// ═══════════════════════════════════════════════════════
-const UPGRADES=[
-  {name:'Basis-Einhorn 🦄',      desc:'Stella ist bereit zum Rechnen!'},
-  {name:'Flügel ✨',             desc:'Stella bekommt Flügel und kann fliegen!'},
-  {name:'Regenbogen-Mähne 🌈',   desc:'Die Mähne leuchtet in allen Farben!'},
-  {name:'Propeller-Horn 🚁',     desc:'Ein Propeller am Horn – schneller!'},
-  {name:'Raketen-Hufe 🚀',       desc:'Raketen unter den Hufen! Whoooosh!'},
-  {name:'Jetpack ✈️',            desc:'Mit Jetpack durch die Wolken!'},
-  {name:'Astronauten-Helm 👩‍🚀',  desc:'Stella fliegt ins Weltall!'},
-  {name:'Sternen-Cape 🌟',       desc:'Das Cape glitzert wie die Sterne!'},
-  {name:'Weltraum-Einhorn 🌌',   desc:'Vollausgerüstet für das Universum!'},
-  {name:'MATHE-MEISTER 🏆',      desc:'Du hast gewonnen! Absolut fantastisch!'},
-];
-
-// Shared CSS animations injected once into the SVG defs
-const SVG_STYLE = `
-<defs>
-<style>
-  /* propeller — rotates around its own center (162,50) */
-  .prop-group { transform-origin:162px 50px; animation:propSpin .45s linear infinite; }
-  @keyframes propSpin { to { transform:rotate(360deg); } }
-
-  /* wings — gentle flap */
-  .wing { transform-origin:72px 115px; animation:wingFlap 1.8s ease-in-out infinite; }
-  @keyframes wingFlap {
-    0%,100% { transform:scaleY(1) skewX(0deg); }
-    40%     { transform:scaleY(.82) skewX(-4deg); }
-    70%     { transform:scaleY(1.06) skewX(2deg); }
-  }
-
-  /* rocket flames — pulse */
-  .rflame-outer { animation:flamePulse .4s ease-in-out infinite alternate; transform-origin:center bottom; }
-  .rflame-inner { animation:flamePulse .25s ease-in-out infinite alternate-reverse; transform-origin:center bottom; }
-  @keyframes flamePulse { from{transform:scaleY(1) scaleX(1)} to{transform:scaleY(1.35) scaleX(.85)} }
-
-  /* jetpack flames */
-  .jflame-outer { animation:jfPulse .35s ease-in-out infinite alternate; transform-origin:50% 0%; }
-  .jflame-inner { animation:jfPulse .2s ease-in-out infinite alternate-reverse; transform-origin:50% 0%; }
-  @keyframes jfPulse { from{transform:scaleY(1)} to{transform:scaleY(1.4)} }
-
-  /* helmet visor shimmer */
-  .visor-shine { animation:visorBlink 3s ease-in-out infinite; }
-  @keyframes visorBlink { 0%,85%,100%{opacity:.45} 90%{opacity:.9} }
-
-  /* cape wave */
-  .cape { transform-origin:68px 125px; animation:capeWave 2.2s ease-in-out infinite; }
-  @keyframes capeWave {
-    0%,100% { transform:rotate(0deg); }
-    30%     { transform:rotate(3deg); }
-    70%     { transform:rotate(-2.5deg); }
-  }
-
-  /* space stars twinkle */
-  .sstar { animation:sTwinkle var(--sd,1.5s) ease-in-out infinite alternate; }
-  @keyframes sTwinkle { from{opacity:.2} to{opacity:1} }
-
-  /* cutie mark star spin */
-  .cutie { transform-origin:108px 155px; animation:cutieSpin 4s linear infinite; }
-  @keyframes cutieSpin { to { transform:rotate(360deg); } }
-
-  /* mane sparkles pulse */
-  .sparkle { animation:sparklePop var(--sp,1.2s) ease-in-out infinite alternate; }
-  @keyframes sparklePop { from{opacity:.3;transform:scale(.7)} to{opacity:1;transform:scale(1.2)} }
-
-  /* tail shimmer */
-  .tail-shimmer { animation:tailShimmer 2s ease-in-out infinite alternate; }
-  @keyframes tailShimmer { from{stroke-dashoffset:0} to{stroke-dashoffset:20} }
-</style>
-</defs>`;
-
-function buildUnicorn(level){
-  const hasWings    = level>=2;
-  const rainbowMane = level>=3;
-  const hasProp     = level>=4;
-  const hasRockets  = level>=5;
-  const hasJetpack  = level>=6;
-  const hasHelmet   = level>=7;
-  const hasCape     = level>=8;
-  const isSpace     = level>=9;
-
-  let s = SVG_STYLE;
-
-  // ── SPACE BACKGROUND ──
-  if(isSpace){
-    s+=`<rect x="-10" y="-10" width="220" height="220" rx="18" fill="#050015" opacity=".65"/>`;
-    const sp=[[15,18],[42,9],[72,28],[158,14],[184,38],[22,82],[179,68],[32,152],[168,158],[82,6],[142,7],[62,168],[153,173],[100,25],[50,120]];
-    sp.forEach(([x,y],i)=>{
-      const d=(1.2+i*.18).toFixed(2)+'s';
-      s+=`<circle class="sstar" cx="${x}" cy="${y}" r="${(.8+Math.random()*.9).toFixed(1)}" fill="white" style="--sd:${d}"/>`;
-    });
-  }
-
-  // ── CAPE ──
-  if(hasCape){
-    s+=`<g class="cape">`;
-    s+=`<path d="M65 125 Q22 100 18 65 Q15 42 30 48 Q26 75 46 90 Q42 65 50 44 Q62 52 54 80 Q68 62 66 38 Q80 48 72 78 Q86 60 82 38 Q94 50 84 80" fill="#7c3aed" opacity=".9"/>`;
-    [[24,60],[50,42],[78,50]].forEach(([x,y],i)=>{
-      const c=['#fbbf24','#60a5fa','#f9a8d4'][i];
-      const delay=(i*.4)+'s';
-      s+=`<path class="sparkle" style="--sp:${(1+i*.3).toFixed(1)}s;animation-delay:${delay}" d="M${x} ${y-5}L${x} ${y+5}M${x-5} ${y}L${x+5} ${y}" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/>`;
-    });
-    s+=`</g>`;
-  }
-
-  // ── WINGS ──
-  if(hasWings){
-    s+=`<g class="wing">`;
-    s+=`<path d="M70 120 Q32 94 28 58 Q40 66 46 90 Q56 68 52 38 Q66 50 58 80 Q72 60 70 32 Q84 46 74 78 Q88 60 88 34 Q98 50 86 80" fill="#e9d5ff" opacity=".92"/>`;
-    s+=`<path d="M70 120 Q32 94 28 58 Q40 66 46 90" fill="none" stroke="#a855f7" stroke-width="2" opacity=".7"/>`;
-    s+=`<path d="M58 80 Q72 60 70 32" fill="none" stroke="#c084fc" stroke-width="1.5" opacity=".6"/>`;
-    s+=`<path d="M54 56 Q65 44 78 52" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-linecap="round"/>`;
-    s+=`</g>`;
-  }
-
-  // ── JETPACK — large, left side, clearly visible ──
-  if(hasJetpack){
-    // main body
-    s+=`<rect x="26" y="106" width="34" height="46" rx="13" fill="#0ea5e9"/>`;
-    // highlight
-    s+=`<rect x="30" y="110" width="9" height="38" rx="4" fill="rgba(255,255,255,.22)"/>`;
-    // top caps
-    s+=`<rect x="28" y="100" width="11" height="13" rx="5" fill="#0284c7"/>`;
-    s+=`<rect x="47" y="100" width="11" height="13" rx="5" fill="#0284c7"/>`;
-    // straps
-    s+=`<path d="M60 116 Q69 110 79 113" fill="none" stroke="#7dd3fc" stroke-width="3" stroke-linecap="round"/>`;
-    s+=`<path d="M60 132 Q69 127 79 130" fill="none" stroke="#7dd3fc" stroke-width="3" stroke-linecap="round"/>`;
-    // nozzles
-    s+=`<rect x="30" y="150" width="11" height="9" rx="3" fill="#0369a1"/>`;
-    s+=`<rect x="49" y="150" width="11" height="9" rx="3" fill="#0369a1"/>`;
-    // flames — animated
-    s+=`<ellipse class="jflame-outer" cx="35.5" cy="166" rx="8" ry="14" fill="#f97316" opacity=".95"/>`;
-    s+=`<ellipse class="jflame-inner" cx="35.5" cy="170" rx="5" ry="9" fill="#fbbf24"/>`;
-    s+=`<ellipse class="jflame-outer" cx="54.5" cy="166" rx="8" ry="14" fill="#f97316" opacity=".95" style="animation-delay:.15s"/>`;
-    s+=`<ellipse class="jflame-inner" cx="54.5" cy="170" rx="5" ry="9" fill="#fbbf24" style="animation-delay:.1s"/>`;
-  }
-
-  // ── BODY ──
-  s+=`<ellipse cx="100" cy="135" rx="55" ry="42" fill="#f5d0fe"/>`;
-  s+=`<ellipse cx="108" cy="140" rx="22" ry="16" fill="white" opacity=".3"/>`;
-
-  // ── HEAD ──
-  s+=`<ellipse cx="148" cy="95" rx="32" ry="28" fill="#f5d0fe"/>`;
-
-  // ── HELMET ──
-  if(hasHelmet){
-    s+=`<path d="M116 88 Q116 50 148 48 Q180 50 180 88 L180 100 Q180 120 160 124 Q148 127 136 124 Q116 120 116 100 Z" fill="rgba(96,165,250,.2)" stroke="#60a5fa" stroke-width="2.5"/>`;
-    s+=`<path class="visor-shine" d="M122 70 Q148 56 174 70" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="3.5" stroke-linecap="round"/>`;
-    s+=`<path d="M118 82 Q148 70 178 82" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2" stroke-linecap="round"/>`;
-    s+=`<circle cx="117" cy="97" r="4" fill="#60a5fa" opacity=".8"/>`;
-    s+=`<circle cx="179" cy="97" r="4" fill="#60a5fa" opacity=".8"/>`;
-  }
-
-  // ── MANE ──
-  const m0=rainbowMane?'#ff6eb4':'#a855f7';
-  const m1=rainbowMane?'#a855f7':'#ec4899';
-  s+=`<path d="M120 72 Q110 60 115 45 Q118 35 125 40 Q122 55 130 65 Q138 55 135 40 Q142 35 145 45 Q142 58 148 68" fill="none" stroke="${m0}" stroke-width="8" stroke-linecap="round"/>`;
-  s+=`<path d="M120 72 Q110 60 115 45 Q118 35 125 40 Q122 55 130 65 Q138 55 135 40 Q142 35 145 45 Q142 58 148 68" fill="none" stroke="${m1}" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 5"/>`;
-  if(rainbowMane){
-    s+=`<path d="M120 72 Q110 60 115 45 Q118 35 125 40 Q122 55 130 65 Q138 55 135 40 Q142 35 145 45 Q142 58 148 68" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7" opacity=".8"/>`;
-    [[112,42],[130,38],[146,44]].forEach(([x,y],i)=>{
-      const c=['#fbbf24','#60a5fa','#f9a8d4'][i];
-      s+=`<path class="sparkle" style="--sp:${(.9+i*.25).toFixed(2)}s;animation-delay:${(i*.35).toFixed(2)}s" d="M${x} ${y-5}L${x} ${y+5}M${x-5} ${y}L${x+5} ${y}" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>`;
-    });
-  }
-
-  // ── HORN ──
-  s+=`<polygon points="162,52 155,75 169,75" fill="#fbbf24"/>`;
-  s+=`<line x1="162" y1="54" x2="162" y2="74" stroke="#f59e0b" stroke-width="1.5"/>`;
-
-  // ── PROPELLER — 3 blades, all centered on (162,50), rotate via CSS ──
-  if(hasProp){
-    // each blade is an ellipse centered at the pivot, offset upward by the arm length
-    // blade 1: straight up
-    // blade 2: 120° rotated
-    // blade 3: 240° rotated
-    // We draw all 3 in a group and rotate the group
-    s+=`<g class="prop-group">`;
-    // center hub (drawn last so it sits on top)
-    // blade 1 — points up from center
-    s+=`<ellipse cx="162" cy="36" rx="7" ry="18" fill="#0ea5e9" opacity=".95"/>`;
-    // blade 2 — 120°
-    s+=`<ellipse cx="162" cy="36" rx="7" ry="18" fill="#f97316" opacity=".95" transform="rotate(120 162 50)"/>`;
-    // blade 3 — 240°
-    s+=`<ellipse cx="162" cy="36" rx="7" ry="18" fill="#34d399" opacity=".95" transform="rotate(240 162 50)"/>`;
-    // hub
-    s+=`<circle cx="162" cy="50" r="7" fill="#1e293b"/>`;
-    s+=`<circle cx="162" cy="50" r="3.5" fill="#94a3b8"/>`;
-    s+=`</g>`;
-  }
-
-  // ── EAR ──
-  s+=`<polygon points="128,72 122,55 136,58" fill="#f9a8d4"/>`;
-  // ── EYE ──
-  s+=`<circle cx="158" cy="92" r="7" fill="#1a0a2e"/>`;
-  s+=`<circle cx="160" cy="90" r="2.5" fill="white"/>`;
-  // ── NOSTRIL ──
-  s+=`<ellipse cx="172" cy="108" rx="4" ry="3" fill="#e879f9" opacity=".6"/>`;
-  // ── SMILE ──
-  s+=`<path d="M165 112 Q170 118 176 112" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>`;
-  // ── BLUSH ──
-  s+=`<ellipse cx="167" cy="103" rx="8" ry="5" fill="#f9a8d4" opacity=".5"/>`;
-
-  // ── TAIL ──
-  const tc=rainbowMane?'#c084fc':'#c084fc';
-  const ts=rainbowMane?'#60a5fa':'#f9a8d4';
-  s+=`<path d="M45 130 Q20 115 25 95 Q28 80 38 90 Q32 105 45 118 Q55 100 48 82 Q55 70 62 82 Q55 100 65 120" fill="none" stroke="${tc}" stroke-width="8" stroke-linecap="round"/>`;
-  s+=`<path class="tail-shimmer" d="M45 130 Q20 115 25 95 Q28 80 38 90 Q32 105 45 118 Q55 100 48 82 Q55 70 62 82 Q55 100 65 120" fill="none" stroke="${ts}" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 5"/>`;
-  if(rainbowMane) s+=`<path d="M45 130 Q20 115 25 95 Q28 80 38 90 Q32 105 45 118" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 7" opacity=".8"/>`;
-
-  // ── LEGS ──
-  s+=`<rect x="75" y="168" width="14" height="28" rx="7" fill="#e9d5ff"/>`;
-  s+=`<rect x="95" y="170" width="14" height="26" rx="7" fill="#e9d5ff"/>`;
-  s+=`<rect x="115" y="168" width="14" height="28" rx="7" fill="#e9d5ff"/>`;
-  s+=`<rect x="135" y="165" width="14" height="26" rx="7" fill="#e9d5ff"/>`;
-
-  // ── HOOVES / ROCKETS ──
-  if(hasRockets){
-    [[74,192],[94,192],[114,192],[134,187]].forEach(([x,y])=>{
-      s+=`<rect x="${x}" y="${y}" width="15" height="13" rx="4" fill="#0ea5e9"/>`;
-      s+=`<polygon points="${x+7.5},${y-9} ${x+1},${y} ${x+14},${y}" fill="#f97316"/>`;
-      s+=`<ellipse class="rflame-outer" cx="${x+7.5}" cy="${y+16}" rx="5" ry="9" fill="#f97316" opacity=".95"/>`;
-      s+=`<ellipse class="rflame-inner" cx="${x+7.5}" cy="${y+19}" rx="3" ry="6" fill="#fbbf24"/>`;
-      s+=`<circle cx="${x+7.5}" cy="${y+5}" r="2.5" fill="white" opacity=".7"/>`;
-    });
-  } else {
-    s+=`<rect x="74" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>`;
-    s+=`<rect x="94" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>`;
-    s+=`<rect x="114" y="192" width="15" height="7" rx="3.5" fill="#a855f7"/>`;
-    s+=`<rect x="134" y="187" width="15" height="7" rx="3.5" fill="#a855f7"/>`;
-  }
-
-  // ── CUTIE MARK (animated spin) ──
-  s+=`<path class="cutie" d="M108 155 l3 7 l7 0 l-6 4 l2 7 l-6-4 l-6 4 l2-7 l-6-4 l7 0 z" fill="#fbbf24" opacity=".9"/>`;
-
-  return s;
-}
-
-function renderSvg(id,level){
-  const el=document.getElementById(id);
-  if(el) el.innerHTML=buildUnicorn(level);
-}
-
-// ═══════════════════════════════════════════════════════
-//  GAME STATE
-// ═══════════════════════════════════════════════════════
-let score=0,level=1,stars=0,streak=0,answered=false;
-let mode='all',turboMode=false,playerName='';
-const QPL=8;
-let questionInLevel=0,currentAnswer=null,totalCorrect=0;
-let timerInterval=null,timerStart=0,timerDuration=10;
-
-const correctMsgs=['Toll gemacht! 🌟','Super! Du bist ein Mathe-Einhorn! 🦄','Wunderbar! ✨','Ja! Das Einhorn tanzt! 🎉','Richtig! Du bist so schlau! 🌈','Fantastisch! Magie! ✨','Wow! 🦄💫','Mega! Weiter so! 🌟'];
-const wrongMsgs=["Fast! Versuch's nochmal 💪",'Ups! Das Einhorn glaubt an dich! 🦄','Nicht ganz, aber du schaffst das! ✨','Nochmal! Du bist mutig! 🌈'];
-const thinkMsgs=['Was ist das Ergebnis? 🌟','Hmmm, weißt du es? 🦄','Zeig dem Einhorn deine Magie! ✨','Denk nach… du schaffst das! 💫','Welche Zahl ist es? 🌈'];
-const timeoutMsgs=['Zeit! Keine Sorge, weiter! ⏱️','Ups, Zeit abgelaufen! ⏰','Schneller beim nächsten! ⚡'];
-
-function maxForLevel(l){return l<=2?10:l<=5?15:20;}
-
-function setStartMode(m){
-  mode=m;
-  ['All','Plus','Minus'].forEach(x=>document.getElementById('startMode'+x).classList.toggle('active',m===x.toLowerCase()));
-}
-function setMode(m){
-  mode=m;
-  ['All','Plus','Minus'].forEach(x=>document.getElementById('mode'+x).classList.toggle('active',m===x.toLowerCase()));
-  nextQuestion();
-}
-
-function startGame(){
-  playerName=document.getElementById('nameInput').value.trim()||'Mathe-Einhorn';
-  turboMode=document.getElementById('turboToggle').checked;
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('headerSub').textContent=`Hallo ${playerName}! Rechne richtig und hilf Stella fliegen!`;
-  ['All','Plus','Minus'].forEach(x=>document.getElementById('mode'+x).classList.toggle('active',mode===x.toLowerCase()));
-  if(turboMode) document.getElementById('timerSection').style.display='flex';
-  renderSvg('mainSvg',1);
-  nextQuestion();
-}
-
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
-function generateQuestion(){
-  const max=maxForLevel(level);let a,b,op;
-  if(mode==='plus')op='+';else if(mode==='minus')op='-';else op=Math.random()<.5?'+':'-';
-  if(op==='+'){a=Math.floor(Math.random()*(max-1))+1;b=Math.floor(Math.random()*(max-a))+1;if(a+b>max)b=max-a;if(b<1)b=1;}
-  else{a=Math.floor(Math.random()*(max-2))+2;b=Math.floor(Math.random()*(a-1))+1;}
-  return{a,b,op,result:op==='+'?a+b:a-b};
-}
-
-function generateChoices(correct,max){
-  const s=new Set([correct]);let att=0;
-  while(s.size<4&&att<60){att++;let d=Math.floor(Math.random()*5)+1;if(Math.random()<.5)d=-d;let c=correct+d;if(c<0)c=correct+Math.abs(d);if(c>max)c=correct-Math.abs(d);if(c>=0&&c<=max)s.add(c);}
-  let e=1;while(s.size<4){if(!s.has(e))s.add(e);e++;}
-  return shuffle([...s]);
-}
-
-function setBubble(msg){
-  const el=document.getElementById('bubble');
-  el.style.animation='none';el.textContent=msg;
-  requestAnimationFrame(()=>el.style.animation='popIn .3s cubic-bezier(.34,1.56,.64,1)');
-}
-
-// TIMER
-function startTimer(){
-  clearInterval(timerInterval);
-  timerStart=Date.now();
-  const fill=document.getElementById('timerFill'),lbl=document.getElementById('timerLabel');
-  fill.style.transition='none';fill.style.width='100%';fill.classList.remove('warn');
-  timerInterval=setInterval(()=>{
-    const el=(Date.now()-timerStart)/1000;
-    const pct=Math.max(0,100-el/timerDuration*100);
-    fill.style.transition='width .1s linear';fill.style.width=pct+'%';
-    lbl.textContent=`⚡ ${Math.ceil(timerDuration-el)}s`;
-    if(pct<35)fill.classList.add('warn');
-    if(el>=timerDuration){clearInterval(timerInterval);handleTimeout();}
-  },100);
-}
-function stopTimer(){clearInterval(timerInterval);return(Date.now()-timerStart)/1000;}
-function handleTimeout(){
-  if(answered)return;answered=true;streak=0;
-  score+=2;questionInLevel++;
-  document.getElementById('score').textContent=score;
-  setBubble(timeoutMsgs[Math.floor(Math.random()*timeoutMsgs.length)]);
-  updateStreak();
-  document.getElementById('timerFill').style.width='0%';
-  document.getElementById('timerLabel').textContent='';
-  if(questionInLevel>=QPL)setTimeout(doLevelUp,900);else setTimeout(nextQuestion,900);
-}
-function calcPoints(el){return el<3?25:el<5?20:el<7?15:10;}
-
-// QUESTIONS
-function nextQuestion(){
-  answered=false;
-  const q=generateQuestion();currentAnswer=q.result;
-  const opSpan=q.op==='+'?`<span class="op-plus">+</span>`:`<span class="op-minus">−</span>`;
-  document.getElementById('equation').innerHTML=`${q.a} ${opSpan} ${q.b} <span style="color:var(--lavender)">=</span> <span class="blank">?</span>`;
-  document.getElementById('taskBadge').textContent=q.op==='+'?'Addition ➕':'Subtraktion ➖';
-  setBubble(thinkMsgs[Math.floor(Math.random()*thinkMsgs.length)]);
-  const max=maxForLevel(level);
-  const cont=document.getElementById('answers');cont.innerHTML='';
-  generateChoices(q.result,max).forEach(c=>{
-    const btn=document.createElement('button');btn.className='ans-btn';btn.textContent=c;
-    btn.onclick=()=>handleAnswer(c,btn);cont.appendChild(btn);
-  });
-  document.getElementById('progressBar').style.width=(questionInLevel/QPL*100)+'%';
-  if(turboMode)startTimer();
-}
-
-function handleAnswer(val,btn){
-  if(answered)return;answered=true;
-  let elapsed=0;if(turboMode)elapsed=stopTimer();
-  if(val===currentAnswer){
-    streak++;totalCorrect++;
-    const pts=turboMode?calcPoints(elapsed):(10+(streak>1?streak*2:0));
-    score+=pts;questionInLevel++;
-    btn.classList.add('correct');
-    const bonus=turboMode&&elapsed<3?' ⚡ Blitz!':turboMode&&elapsed<5?' 🚀 Schnell!':'';
-    setBubble(correctMsgs[Math.floor(Math.random()*correctMsgs.length)]+bonus);
-    flashUnicorn('happy');spawnConfetti(30);
-    if(streak%3===0&&stars<5)stars=Math.min(5,stars+1);
-    document.getElementById('score').textContent=score;
-    document.getElementById('starDisplay').textContent='⭐'.repeat(stars)+'☆'.repeat(5-stars);
-    updateStreak();
-    if(questionInLevel>=QPL)setTimeout(doLevelUp,700);else setTimeout(nextQuestion,900);
-  }else{
-    streak=0;btn.classList.add('wrong');
-    setBubble(wrongMsgs[Math.floor(Math.random()*wrongMsgs.length)]);
-    flashUnicorn('sad');updateStreak();
-    if(turboMode)startTimer();
-    setTimeout(()=>{btn.classList.remove('wrong');answered=false;},600);
-  }
-}
-
-function updateStreak(){
-  const el=document.getElementById('streak');
-  if(streak>=3)el.textContent=`🔥 ${streak}x Streak!`;
-  else if(streak>0)el.textContent=`✨ ${streak} richtig!`;
-  else el.textContent='';
-}
-
-function flashUnicorn(mood){
-  const w=document.getElementById('unicornWrap');
-  w.style.filter=mood==='happy'?'drop-shadow(0 0 40px rgba(251,191,36,.9))':'drop-shadow(0 0 20px rgba(239,68,68,.6))';
-  setTimeout(()=>w.style.filter='drop-shadow(0 0 30px rgba(255,110,180,.5))',600);
-}
-
-// LEVEL UP
-function doLevelUp(){
-  clearInterval(timerInterval);
-  const next=level+1;
-  if(next>10){showWin();return;}
-  level=next;questionInLevel=0;
-  document.getElementById('levelDisp').textContent=level;
-  document.getElementById('upgradeLabel').textContent=UPGRADES[level-1].name;
-  renderSvg('mainSvg',level);
-  renderSvg('luSvg',level);
-  document.getElementById('levelupTitle').textContent=`🌟 Level ${level}!`;
-  document.getElementById('levelupUpgrade').textContent=`✨ Neu: ${UPGRADES[level-1].name}`;
-  document.getElementById('levelupSub').textContent=UPGRADES[level-1].desc;
-  document.getElementById('levelupOverlay').classList.add('show');
-  spawnConfetti(80);
-}
-function closeLevelUp(){
-  document.getElementById('levelupOverlay').classList.remove('show');
-  nextQuestion();
-}
-
-// WIN
-function showWin(){
-  clearInterval(timerInterval);
-  const now=new Date();
-  document.getElementById('dpDate').textContent=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('dpName').textContent=playerName;
-  document.getElementById('winScore').textContent=score;
-  document.getElementById('winCorrect').textContent=totalCorrect;
-  renderSvg('diplomaSvg',10);
-  document.getElementById('winOverlay').classList.add('show');
-  spawnConfetti(120);
-}
-
-// PDF — html2canvas renders the diploma div as image, then embed in jsPDF
-async function downloadPDF(){
-  // Build a standalone diploma div offscreen
-  const now=new Date();
-  const dateStr=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
-  const turboTag=turboMode?`<div style="background:#f5d0fe;border-radius:10px;padding:8px 16px;display:inline-block;margin:0 6px"><div style="font-size:1.4rem">⚡</div><div style="font-size:.65rem;color:#7c3aed;font-weight:800;letter-spacing:.5px">TURBO</div></div>`:'';
-
-  const el=document.createElement('div');
-  el.style.cssText='position:fixed;left:-9999px;top:0;width:560px;background:white;font-family:Nunito,Baloo2,sans-serif;';
-  el.innerHTML=`
-    <div style="padding:32px;background:white;border-radius:20px;text-align:center;position:relative;border:8px solid transparent;background:linear-gradient(white,white) padding-box,linear-gradient(135deg,#fbbf24,#ff6eb4,#a855f7,#60a5fa,#34d399,#fbbf24) border-box;">
-      <!-- inner border -->
-      <div style="position:absolute;inset:12px;border:3px dashed rgba(168,85,247,.25);border-radius:12px;pointer-events:none"></div>
-
-      <div style="font-size:2rem;margin-bottom:4px">⭐⭐⭐⭐⭐</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.6rem;color:#3d1a6e;margin-bottom:2px">🌟 Urkunde der Mathe-Magie 🌟</div>
-      <div style="font-size:.8rem;color:#9a6bbf;font-weight:700;margin-bottom:6px">verliehen an</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2.8rem;background:linear-gradient(135deg,#e0559a,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:10px">${playerName}</div>
-
-      <div style="font-size:5rem;line-height:1;margin:8px 0">🦄</div>
-
-      <div style="width:80%;height:2px;background:linear-gradient(90deg,transparent,#c084fc,transparent);margin:14px auto"></div>
-
-      <div style="font-size:1rem;color:#5a3a8a;font-weight:700;line-height:1.7;margin:10px 0">
-        hat alle <strong>10 Level</strong> gemeistert,<br>
-        das Einhorn Stella in ein <strong>Weltraum-Einhorn ✨</strong> verwandelt<br>
-        und bewiesen: Rechnen ist pure Magie! 🌈
-      </div>
-
-      <div style="display:flex;justify-content:center;gap:12px;margin:16px 0;flex-wrap:wrap">
-        <div style="background:#f5d0fe;border-radius:12px;padding:10px 24px;min-width:90px">
-          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2rem;color:#a855f7">${score}</div>
-          <div style="font-size:.65rem;color:#7c3aed;font-weight:800;letter-spacing:.5px">PUNKTE</div>
-        </div>
-        <div style="background:#f5d0fe;border-radius:12px;padding:10px 24px;min-width:90px">
-          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:2rem;color:#a855f7">${totalCorrect}</div>
-          <div style="font-size:.65rem;color:#7c3aed;font-weight:800;letter-spacing:.5px">RICHTIG</div>
-        </div>
-        ${turboTag}
-      </div>
-
-      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:4px auto 10px;box-shadow:0 4px 16px rgba(245,158,11,.4);border:4px solid white">🏆</div>
-
-      <div style="width:80%;height:1px;background:linear-gradient(90deg,transparent,#c084fc,transparent);margin:10px auto"></div>
-
-      <div style="font-size:.75rem;color:#9a6bbf;font-weight:700;margin-top:8px">${dateStr}</div>
-      <div style="font-size:.7rem;color:#c084fc;margin-top:4px">🦄 Einhorn Mathe-Zauber</div>
-    </div>`;
-
-  document.body.appendChild(el);
-
-  try {
-    const canvas=await html2canvas(el.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
-    document.body.removeChild(el);
-
-    const{jsPDF}=window.jspdf;
-    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const W=210,H=297;
-    const imgW=W-20, imgH=canvas.height*(imgW/canvas.width);
-    const y=(H-imgH)/2;
-    doc.addImage(canvas.toDataURL('image/png'),'PNG',10,Math.max(10,y),imgW,imgH);
-    doc.save(`Urkunde_${playerName.replace(/\s+/g,'_')}.pdf`);
-  } catch(e) {
-    document.body.removeChild(el);
-    alert('PDF konnte nicht erstellt werden. Versuche es nochmal.');
-    console.error(e);
-  }
-}
-
-function restartGame(){
-  clearInterval(timerInterval);
-  score=0;level=1;stars=0;streak=0;answered=false;questionInLevel=0;totalCorrect=0;
-  ['score','levelDisp'].forEach(id=>document.getElementById(id).textContent=id==='score'?0:1);
-  document.getElementById('starDisplay').textContent='☆☆☆☆☆';
-  document.getElementById('streak').textContent='';
-  document.getElementById('upgradeLabel').textContent=UPGRADES[0].name;
-  document.getElementById('progressBar').style.width='0%';
-  document.getElementById('timerFill').style.width='100%';
-  document.getElementById('timerLabel').textContent='';
-  document.getElementById('winOverlay').classList.remove('show');
-  document.getElementById('startScreen').classList.remove('hidden');
-}
-
-// CONFETTI
-const CC=['#ff6eb4','#a855f7','#fbbf24','#34d399','#60a5fa','#f9a8d4','#c084fc'];
-function spawnConfetti(n=35){
-  const w=document.getElementById('confetti');
-  for(let i=0;i<n;i++){
-    const p=document.createElement('div');p.className='confetti-p';
-    const sz=6+Math.random()*10;
-    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*15-5}%;width:${sz}px;height:${sz}px;background:${CC[Math.floor(Math.random()*CC.length)]};border-radius:${Math.random()<.5?'50%':'3px'};--fd:${.8+Math.random()*1.5}s;--fdelay:${Math.random()*.4}s;`;
-    w.appendChild(p);setTimeout(()=>p.remove(),2500);
-  }
-}
-
-// STARFIELD
 (function(){
   const s=document.getElementById('stars');
-  for(let i=0;i<80;i++){
-    const el=document.createElement('div');el.className='star';const sz=1+Math.random()*3;
+  for(let i=0;i<70;i++){
+    const el=document.createElement('div');el.className='star';
+    const sz=1+Math.random()*2.5;
     el.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--d:${1.5+Math.random()*3}s;animation-delay:${Math.random()*3}s;`;
     s.appendChild(el);
   }
