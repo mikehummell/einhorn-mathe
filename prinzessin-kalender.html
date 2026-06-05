@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>👑 Prinzessin Kalender-Zauber</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --rose:#e91e8c;--drose:#b5106a;--lrose:#fce4ec;
+  --purple:#9c27b0;--lpurple:#f3e5f5;
+  --gold:#f9a825;--dgold:#e65100;
+  --sky:#64b5f6;--mint:#52d9a0;
+  --dark:#2a0a2a;--white:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+body{font-family:'Nunito',sans-serif;
+  background:linear-gradient(160deg,#fce4ec 0%,#f3e5f5 50%,#e8eaf6 100%);
+  min-height:100vh;overflow-x:hidden;color:var(--dark);}
+
+/* sparkles bg */
+.sparkle-bg{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.sp{position:absolute;font-size:var(--ss);animation:spFloat var(--sd) ease-in-out infinite alternate;opacity:.4;}
+@keyframes spFloat{from{transform:translate(0,0) rotate(0deg)}to{transform:translate(10px,-15px) rotate(20deg)}}
+
+/* ── START SCREEN ── */
+.start-screen{position:fixed;inset:0;z-index:400;
+  background:linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;overflow-y:auto;}
+.start-screen.hidden{display:none;}
+.start-princess{font-size:5rem;animation:princessBounce 2s ease-in-out infinite;}
+@keyframes princessBounce{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+.start-title{font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,7vw,3rem);
+  background:linear-gradient(135deg,var(--rose),var(--purple),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;filter:drop-shadow(0 2px 8px rgba(233,30,140,.3));}
+.start-sub{font-size:.9rem;color:var(--purple);font-weight:800;text-align:center;margin-top:-10px;}
+.start-card{background:white;border-radius:24px;padding:22px 24px;width:100%;max-width:380px;
+  display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 8px 32px rgba(233,30,140,.15);}
+.sc-label{font-size:.75rem;color:var(--rose);font-weight:800;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;}
+.sc-input{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.15rem;
+  background:var(--lrose);border:2px solid rgba(233,30,140,.2);border-radius:12px;
+  color:var(--dark);padding:10px 14px;outline:none;width:100%;transition:border-color .2s;}
+.sc-input:focus{border-color:var(--rose);}
+.sc-input::placeholder{color:rgba(233,30,140,.3);}
+.mode-row{display:flex;gap:7px;flex-wrap:wrap;}
+.mode-btn{font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:800;padding:8px 14px;
+  border:2px solid rgba(233,30,140,.25);border-radius:999px;background:transparent;
+  color:var(--rose);cursor:pointer;transition:all .2s;}
+.mode-btn.active,.mode-btn:hover{background:linear-gradient(135deg,var(--rose),var(--purple));border-color:transparent;color:white;}
+.toggle-row{display:flex;align-items:center;gap:11px;}
+.tw{position:relative;width:48px;height:26px;flex-shrink:0;}
+.tw input{opacity:0;width:0;height:0;}
+.ts{position:absolute;inset:0;background:var(--lrose);border-radius:999px;cursor:pointer;transition:.3s;}
+.ts::before{content:'';position:absolute;width:18px;height:18px;left:4px;top:4px;background:var(--rose);border-radius:50%;transition:.3s;}
+.tw input:checked+.ts{background:linear-gradient(135deg,var(--rose),var(--purple));}
+.tw input:checked+.ts::before{transform:translateX(22px);background:white;}
+.tl{font-size:.88rem;font-weight:800;color:var(--rose);}
+.tsub{font-size:.7rem;color:var(--purple);opacity:.7;}
+.start-btn{font-family:'Fredoka One',cursive;font-size:1.3rem;padding:14px;
+  border:none;border-radius:16px;
+  background:linear-gradient(135deg,var(--rose),var(--purple));
+  color:white;cursor:pointer;box-shadow:0 6px 20px rgba(233,30,140,.4);transition:transform .15s;}
+.start-btn:hover{transform:scale(1.04);}
+
+/* ── HEADER ── */
+header{position:relative;z-index:1;text-align:center;padding:16px 16px 8px;}
+header h1{font-family:'Fredoka One',cursive;font-size:clamp(1.6rem,5vw,2.4rem);
+  background:linear-gradient(135deg,var(--rose),var(--purple),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+header p{font-size:.82rem;color:var(--purple);font-weight:700;margin-top:2px;}
+
+/* HUD */
+.hud{position:relative;z-index:1;display:flex;gap:9px;flex-wrap:wrap;justify-content:center;padding:0 14px 8px;}
+.hud-pill{background:white;border-radius:999px;padding:6px 15px;
+  box-shadow:0 3px 14px rgba(233,30,140,.12);
+  display:flex;align-items:center;gap:7px;font-weight:800;color:var(--dark);font-size:.85rem;}
+.hud-pill .val{color:var(--rose);}
+
+/* LEVEL TRACK */
+.level-track{width:100%;padding:0 14px;position:relative;z-index:1;}
+.lt-labels{display:flex;justify-content:space-between;font-size:.72rem;font-weight:800;color:var(--purple);margin-bottom:4px;}
+.lt-bar{height:12px;background:rgba(233,30,140,.1);border-radius:999px;overflow:hidden;}
+.lt-fill{height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--rose),var(--purple),var(--gold));
+  transition:width .6s cubic-bezier(.34,1.2,.64,1);
+  box-shadow:0 0 10px rgba(233,30,140,.4);}
+
+/* GAME AREA */
+.game-area{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:0 14px 40px;gap:12px;}
+
+/* PRINCESS STAGE */
+.princess-stage{position:relative;width:100%;max-width:300px;height:195px;display:flex;align-items:center;justify-content:center;}
+.princess-wrap{width:180px;height:180px;filter:drop-shadow(0 6px 20px rgba(233,30,140,.3));animation:princessFloat 3s ease-in-out infinite;}
+.princess-wrap svg{width:100%;height:100%;overflow:visible;}
+@keyframes princessFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes princessDance{0%{transform:rotate(-10deg)}25%{transform:rotate(10deg) translateY(-8px)}50%{transform:rotate(-8deg)}75%{transform:rotate(10deg) translateY(-6px)}100%{transform:rotate(0)}}
+@keyframes princessSad{0%,100%{transform:rotate(0)}30%{transform:rotate(-4deg)}70%{transform:rotate(4deg)}}
+@keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.13)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+.speech{position:absolute;top:-2px;right:-14px;background:white;
+  border-radius:18px 18px 18px 4px;padding:8px 13px;
+  font-weight:800;font-size:.88rem;color:var(--dark);
+  box-shadow:0 4px 14px rgba(0,0,0,.1);max-width:155px;text-align:center;line-height:1.3;
+  animation:popIn .35s cubic-bezier(.34,1.56,.64,1);z-index:10;}
+.upgrade-lbl{font-size:.73rem;color:var(--rose);font-weight:800;text-align:center;min-height:17px;}
+
+/* QUESTION CARD */
+.question-card{background:white;border-radius:26px;padding:20px 16px 16px;
+  width:100%;max-width:420px;text-align:center;
+  box-shadow:0 6px 28px rgba(233,30,140,.12),0 1px 0 rgba(255,255,255,.9) inset;}
+.diff-badge{display:inline-block;border-radius:999px;padding:4px 14px;font-size:.7rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.5px;color:white;margin-bottom:10px;}
+.question-text{font-family:'Fredoka One',cursive;font-size:clamp(1.2rem,5vw,1.8rem);
+  color:var(--dark);line-height:1.3;margin:6px 0 10px;}
+.question-emoji{font-size:2.4rem;margin:4px 0;}
+
+/* TIMER */
+.timer-section{width:100%;max-width:420px;display:none;flex-direction:column;gap:3px;}
+.timer-bar{height:9px;background:rgba(233,30,140,.1);border-radius:999px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--mint),var(--sky));
+  transition:width .1s linear,background .3s;}
+.timer-fill.warn{background:linear-gradient(90deg,#f97316,#ef4444);}
+.timer-lbl{font-size:.7rem;color:var(--purple);font-weight:800;text-align:right;min-height:14px;}
+
+.streak-row{font-size:.85rem;font-weight:800;color:var(--gold);min-height:18px;text-align:center;}
+
+/* ANSWERS */
+.answers{display:grid;gap:10px;width:100%;max-width:420px;}
+.answers.cols2{grid-template-columns:1fr 1fr;}
+.answers.cols1{grid-template-columns:1fr;}
+.ans-btn{font-family:'Fredoka One',cursive;font-size:1.25rem;padding:14px 10px;
+  border:3px solid rgba(233,30,140,.2);border-radius:18px;background:white;color:var(--dark);
+  cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;
+  box-shadow:0 4px 14px rgba(0,0,0,.06);text-align:center;line-height:1.2;}
+.ans-btn:hover{transform:translateY(-3px) scale(1.04);border-color:var(--rose);
+  box-shadow:0 8px 22px rgba(233,30,140,.25);}
+.ans-btn:active{transform:scale(.96);}
+.ans-btn.correct{background:linear-gradient(135deg,#d1fae5,#6ee7b7);border-color:var(--mint);
+  box-shadow:0 0 24px rgba(82,217,160,.5);animation:correctPop .4s cubic-bezier(.34,1.56,.64,1);}
+.ans-btn.wrong{background:linear-gradient(135deg,#fee2e2,#fca5a5);border-color:#f87171;animation:shake .35s ease;}
+
+/* MODE TOGGLE */
+.mode-wrap{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;}
+
+/* CONFETTI */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:200;}
+.cp{position:absolute;border-radius:3px;animation:cffall var(--fd) ease-in var(--dl) forwards;opacity:0;}
+@keyframes cffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(600deg);opacity:0}}
+
+/* LEVEL UP */
+.lu-ov{position:fixed;inset:0;z-index:300;
+  background:rgba(252,228,236,.92);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.lu-ov.show{opacity:1;pointer-events:all;}
+.lu-princess{width:150px;height:150px;animation:princessDance 1s ease-in-out infinite;}
+.lu-princess svg{width:100%;height:100%;overflow:visible;}
+.lu-title{font-family:'Fredoka One',cursive;font-size:clamp(2rem,8vw,3.5rem);
+  background:linear-gradient(135deg,var(--rose),var(--purple),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;animation:luPulse 1s ease-in-out infinite alternate;}
+@keyframes luPulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+.lu-upgrade{background:white;border:3px solid var(--rose);border-radius:14px;
+  padding:9px 20px;font-weight:800;font-size:.95rem;color:var(--rose);text-align:center;}
+.lu-sub{font-size:.9rem;font-weight:700;color:var(--purple);text-align:center;}
+.lu-btn{font-family:'Fredoka One',cursive;font-size:1.2rem;padding:13px 40px;
+  border:none;border-radius:999px;
+  background:linear-gradient(135deg,var(--rose),var(--purple));
+  color:white;cursor:pointer;box-shadow:0 6px 20px rgba(233,30,140,.4);transition:transform .15s;}
+.lu-btn:active{transform:scale(.96);}
+
+/* WIN */
+.win-ov{position:fixed;inset:0;z-index:400;
+  background:linear-gradient(160deg,#fce4ec,#f3e5f5,#e8eaf6);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  overflow-y:auto;padding:18px 14px 40px;gap:12px;opacity:0;pointer-events:none;transition:opacity .4s;}
+.win-ov.show{opacity:1;pointer-events:all;}
+.win-title{font-family:'Fredoka One',cursive;font-size:clamp(1.7rem,7vw,2.8rem);
+  background:linear-gradient(135deg,var(--rose),var(--purple),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;}
+.diploma-wrap{background:white;border-radius:24px;padding:22px 18px;max-width:380px;width:100%;
+  text-align:center;position:relative;border:6px solid transparent;background-clip:padding-box;}
+.diploma-wrap::before{content:'';position:absolute;inset:-6px;border-radius:28px;z-index:-1;
+  background:linear-gradient(135deg,var(--gold),var(--rose),var(--purple),var(--sky),var(--gold));
+  background-size:300% 300%;animation:rbBorder 3s linear infinite;}
+@keyframes rbBorder{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.dip-head{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--rose);margin-bottom:3px;}
+.dip-name{font-family:'Fredoka One',cursive;font-size:2.2rem;
+  background:linear-gradient(135deg,var(--rose),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.1;margin:5px 0;}
+.dip-princess{width:90px;height:90px;margin:0 auto;animation:princessFloat 2s ease-in-out infinite;}
+.dip-princess svg{width:100%;height:100%;overflow:visible;}
+.dip-text{font-size:.82rem;font-weight:700;color:#5a2a5a;line-height:1.6;margin:7px 0;}
+.dip-stats{display:flex;justify-content:center;gap:18px;margin:7px 0;}
+.dsv{font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--rose);}
+.dsl{font-size:.62rem;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+.dip-seal{display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--dgold));
+  font-size:1.5rem;border:3px solid white;box-shadow:0 4px 14px rgba(249,168,37,.4);margin:5px 0 3px;}
+.dip-date{font-size:.68rem;color:var(--purple);font-weight:700;}
+.win-btns{display:flex;flex-direction:column;gap:9px;width:100%;max-width:300px;}
+.win-btn{font-family:'Fredoka One',cursive;font-size:1rem;padding:12px 18px;
+  border:none;border-radius:999px;cursor:pointer;color:white;width:100%;transition:transform .15s;
+  box-shadow:0 5px 16px rgba(0,0,0,.15);}
+.win-btn:active{transform:scale(.97);}
+.win-btn.dl{background:linear-gradient(135deg,var(--rose),var(--purple));}
+.win-btn.re{background:linear-gradient(135deg,var(--mint),#2ec98a);}
+
+@media(max-width:400px){.ans-btn{font-size:1.1rem;padding:12px 8px}}
+</style>
+</head>
+<body>
+
+<div class="sparkle-bg" id="sparkleBg"></div>
+<div class="confetti-wrap" id="confetti"></div>
+
+<!-- START -->
+<div class="start-screen" id="startScreen">
+  <div class="start-princess">👑</div>
+  <div class="start-title">Prinzessin Kalender-Zauber</div>
+  <div class="start-sub">Lerne Wochentage & Monate! 📅</div>
+  <div class="start-card">
+    <div>
+      <label class="sc-label">Dein Name</label>
+      <input class="sc-input" id="nameInput" type="text" placeholder="z.B. Lena" maxlength="30" autocomplete="off"/>
+    </div>
+    <div>
+      <label class="sc-label">Was möchtest du lernen?</label>
+      <div class="mode-row">
+        <button class="mode-btn active" id="startModeWeek"  onclick="setStartMode('week')">📅 Wochentage</button>
+        <button class="mode-btn"        id="startModeMonth" onclick="setStartMode('month')">🗓️ Monate</button>
+        <button class="mode-btn"        id="startModeBoth"  onclick="setStartMode('both')">👑 Beides</button>
+      </div>
+    </div>
+    <div>
+      <label class="sc-label">Optionen</label>
+      <div class="toggle-row">
+        <label class="tw"><input type="checkbox" id="turboToggle"><span class="ts"></span></label>
+        <div><div class="tl">⚡ Turbo-Modus</div><div class="tsub">Mehr Punkte bei schneller Antwort</div></div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Los geht's! 👑</button>
+  </div>
+</div>
+
+<!-- LEVEL UP -->
+<div class="lu-ov" id="luOv">
+  <div class="lu-princess"><svg id="luSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="lu-title" id="luTitle">🌟 Level 2!</div>
+  <div class="lu-upgrade" id="luUpgrade">Neues Upgrade!</div>
+  <div class="lu-sub" id="luSub">Weiter so!</div>
+  <button class="lu-btn" onclick="closeLevelUp()">Weiter! 👑</button>
+</div>
+
+<!-- WIN -->
+<div class="win-ov" id="winOv">
+  <div class="win-title">🏆 Königliche Meisterin!</div>
+  <div class="diploma-wrap" id="diplomaEl">
+    <div class="dip-head">👑 Kalender-Urkunde 📅</div>
+    <div style="font-size:.68rem;color:var(--purple);font-weight:700">verliehen an</div>
+    <div class="dip-name" id="dipName">Kalender-Prinzessin</div>
+    <div class="dip-princess"><svg id="dipSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="dip-text">hat alle Wochentage und Monate gelernt,<br>ihr Schloss vollständig erbaut<br>und bewiesen: Wissen ist Magie! 👑✨</div>
+    <div class="dip-stats">
+      <div><div class="dsv" id="winScore">0</div><div class="dsl">Punkte</div></div>
+      <div><div class="dsv" id="winCorrect">0</div><div class="dsl">Richtig</div></div>
+    </div>
+    <div class="dip-seal">🏆</div>
+    <div class="dip-date" id="dipDate"></div>
+  </div>
+  <div class="win-btns">
+    <button class="win-btn dl" onclick="downloadPDF()">📄 Urkunde speichern</button>
+    <button class="win-btn re" onclick="restartGame()">🔄 Nochmal spielen</button>
+  </div>
+</div>
+
+<header>
+  <h1>👑 Prinzessin Kalender-Zauber</h1>
+  <p id="headerSub">Lerne Wochentage und Monate!</p>
+</header>
+
+<div class="hud">
+  <div class="hud-pill">⭐ <span class="val" id="score">0</span> Punkte</div>
+  <div class="hud-pill">🏰 Level <span class="val" id="levelDisp">1</span></div>
+  <div class="hud-pill">🔥 Streak <span class="val" id="streakDisp">0</span></div>
+</div>
+
+<div class="level-track">
+  <div class="lt-labels">
+    <span id="ltLabel">Level 1 – Wochentage Namen</span>
+    <span id="ltProgress">0 / 8</span>
+  </div>
+  <div class="lt-bar"><div class="lt-fill" id="ltFill" style="width:0%"></div></div>
+</div>
+
+<div class="game-area">
+  <div class="mode-wrap">
+    <button class="mode-btn active" id="modeWeek"  onclick="setMode('week')">📅 Wochentage</button>
+    <button class="mode-btn"        id="modeMonth" onclick="setMode('month')">🗓️ Monate</button>
+    <button class="mode-btn"        id="modeBoth"  onclick="setMode('both')">👑 Beides</button>
+  </div>
+
+  <div class="princess-stage">
+    <div class="princess-wrap" id="princessWrap">
+      <svg id="mainSvg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="speech" id="speech">Welcher Tag ist das? 📅</div>
+  </div>
+  <div class="upgrade-lbl" id="upgradeLabel">Prinzessin 👑</div>
+
+  <div class="question-card">
+    <div class="diff-badge" id="diffBadge" style="background:linear-gradient(135deg,var(--rose),var(--drose))">Wochentage 📅</div>
+    <div class="question-emoji" id="questionEmoji">📅</div>
+    <div class="question-text" id="questionText">Wähle den richtigen Tag!</div>
+
+    <div class="timer-section" id="timerSection">
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+      <div class="timer-lbl" id="timerLbl"></div>
+    </div>
+    <div class="streak-row" id="streakRow"></div>
+  </div>
+
+  <div class="answers cols2" id="answers"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  UPGRADES — Schloss aufbauen
+// ═══════════════════════════════════════════
+const UPGRADES=[
+  {name:'Prinzessin 👑',          desc:'Willkommen in deinem Königreich!'},
+  {name:'Goldene Krone ✨',        desc:'Eine Krone für die klügste Prinzessin!'},
+  {name:'Zauberumhang 🌟',         desc:'Ein funkelnder Umhang voller Magie!'},
+  {name:'Zauberstab 🪄',           desc:'Abrakadabra – du kannst zaubern!'},
+  {name:'Glasschuhe 👠',           desc:'Die schönsten Schuhe im Königreich!'},
+  {name:'Schlossturm 🏰',          desc:'Dein Turm wächst in den Himmel!'},
+  {name:'Königsgarten 🌹',         desc:'Ein wunderschöner Rosengarten!'},
+  {name:'Weiser Eule 🦉',          desc:'Die Eule kennt alle Wochentage und Monate!'},
+  {name:'Regenbogen-Pferd 🦄',     desc:'Ein Einhorn für die Königin!'},
+  {name:'KALENDER-KÖNIGIN 🏆',     desc:'Du kennst alle Tage und Monate! Fantastisch!'},
+];
+
+// SVG ANIMATIONS
+const SVG_ANIM=`<defs><style>
+  .crown{transform-origin:100px 55px;animation:crownGlow 2s ease-in-out infinite alternate;}
+  @keyframes crownGlow{from{filter:drop-shadow(0 0 4px #f9a825)}to{filter:drop-shadow(0 0 12px #f9a825)}}
+  .cape{transform-origin:100px 120px;animation:capeWave 2.5s ease-in-out infinite alternate;}
+  @keyframes capeWave{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
+  .wand{transform-origin:155px 140px;animation:wandWave 2s ease-in-out infinite alternate;}
+  @keyframes wandWave{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+  .wand-star{transform-origin:165px 110px;animation:starSpin 2s linear infinite;}
+  @keyframes starSpin{to{transform:rotate(360deg)}}
+  .shoe{animation:shoeShine 1.5s ease-in-out infinite alternate;}
+  @keyframes shoeShine{from{filter:drop-shadow(0 0 3px #64b5f6)}to{filter:drop-shadow(0 0 10px #64b5f6)}}
+  .tower{transform-origin:35px 120px;animation:towerSway 4s ease-in-out infinite alternate;}
+  @keyframes towerSway{from{transform:rotate(-.5deg)}to{transform:rotate(.5deg)}}
+  .rose{animation:rosePulse 2s ease-in-out infinite alternate;}
+  @keyframes rosePulse{from{transform:scale(1)}to{transform:scale(1.1)}}
+  .owl{transform-origin:165px 95px;animation:owlBob 2s ease-in-out infinite alternate;}
+  @keyframes owlBob{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+  .unicorn{transform-origin:30px 160px;animation:unicornPrance 1.5s ease-in-out infinite alternate;}
+  @keyframes unicornPrance{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+  .gem{animation:gemBlink 1.8s ease-in-out infinite alternate;}
+  @keyframes gemBlink{from{opacity:.6}to{opacity:1}}
+  .sparkle-ring{transform-origin:100px 100px;animation:ringPulse 3s ease-in-out infinite alternate;}
+  @keyframes ringPulse{from{opacity:.4;transform:scale(.95)}to{opacity:.9;transform:scale(1.05)}}
+</style></defs>`;
+
+function buildPrincess(level){
+  const hasCrown    = level>=2;
+  const hasCape     = level>=3;
+  const hasWand     = level>=4;
+  const hasShoes    = level>=5;
+  const hasTower    = level>=6;
+  const hasGarden   = level>=7;
+  const hasOwl      = level>=8;
+  const hasUnicorn  = level>=9;
+  const hasStars    = level>=10;
+
+  let s=SVG_ANIM;
+
+  // sparkle ring for win
+  if(hasStars){
+    for(let i=0;i<8;i++){
+      const a=i*45*Math.PI/180;
+      const x=100+75*Math.cos(a),y=100+75*Math.sin(a);
+      const c=['#f9a825','#e91e8c','#9c27b0','#64b5f6','#52d9a0'][i%5];
+      s+=`<path class="sparkle-ring" d="M${x} ${y-6}L${x} ${y+6}M${x-6} ${y}L${x+6} ${y}" stroke="${c}" stroke-width="2.5" stroke-linecap="round" style="animation-delay:${i*.2}s"/>`;
+    }
+  }
+
+  // tower (background left)
+  if(hasTower){
+    s+=`<g class="tower">`;
+    s+=`<rect x="12" y="80" width="40" height="110" rx="4" fill="#ce93d8"/>`;
+    s+=`<polygon points="12,80 32,50 52,80" fill="#ab47bc"/>`;
+    // battlements
+    [16,26,36,46].forEach(x=>s+=`<rect x="${x}" y="76" width="6" height="8" rx="2" fill="#9c27b0"/>`);
+    // window
+    s+=`<rect x="24" y="110" width="16" height="20" rx="8" fill="#fff9c4" opacity=".8"/>`;
+    s+=`<ellipse cx="32" cy="108" rx="8" ry="2" fill="#f9a825"/>`;
+    // flag
+    s+=`<line x1="32" y1="50" x2="32" y2="28" stroke="#9c27b0" stroke-width="2"/>`;
+    s+=`<polygon points="32,28 48,34 32,40" fill="#e91e8c"/>`;
+    s+=`</g>`;
+  }
+
+  // garden (background right)
+  if(hasGarden){
+    [[155,170],[168,165],[158,155],[172,158]].forEach(([x,y],i)=>{
+      s+=`<circle class="rose" cx="${x}" cy="${y}" r="7" fill="#e91e8c" style="animation-delay:${i*.3}s"/>`;
+      s+=`<line x1="${x}" y1="${y+7}" x2="${x}" y2="${y+18}" stroke="#4caf50" stroke-width="2"/>`;
+    });
+    // bush
+    s+=`<ellipse cx="165" cy="182" rx="22" ry="12" fill="#66bb6a"/>`;
+  }
+
+  // unicorn
+  if(hasUnicorn){
+    s+=`<g class="unicorn">`;
+    s+=`<ellipse cx="32" cy="168" rx="22" ry="14" fill="#f8bbd0"/>`;
+    s+=`<circle cx="46" cy="155" r="12" fill="#f8bbd0"/>`;
+    // horn
+    s+=`<polygon points="50,142 46,154 54,154" fill="#f9a825"/>`;
+    // eye
+    s+=`<circle cx="50" cy="153" r="3" fill="#4a1a6a"/>`;
+    s+=`<circle cx="51" cy="152" r="1.2" fill="white"/>`;
+    // mane
+    s+=`<path d="M36 150 Q32 142 36 134 Q40 142 38 150" fill="none" stroke="#e91e8c" stroke-width="4" stroke-linecap="round"/>`;
+    s+=`<path d="M36 150 Q32 142 36 134 Q40 142 38 150" fill="none" stroke="#9c27b0" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 4"/>`;
+    // legs
+    [20,28,36,44].forEach(x=>s+=`<rect x="${x}" y="178" width="6" height="14" rx="3" fill="#f8bbd0"/>`);
+    s+=`</g>`;
+  }
+
+  // owl
+  if(hasOwl){
+    s+=`<g class="owl">`;
+    s+=`<ellipse cx="167" cy="105" rx="16" ry="20" fill="#a1887f"/>`;
+    s+=`<ellipse cx="167" cy="98" rx="12" ry="12" fill="#bcaaa4"/>`;
+    // ears
+    s+=`<polygon points="158,90 154,80 164,87" fill="#8d6e63"/>`;
+    s+=`<polygon points="176,90 180,80 170,87" fill="#8d6e63"/>`;
+    // eyes
+    s+=`<circle cx="162" cy="96" r="5" fill="white"/><circle cx="172" cy="96" r="5" fill="white"/>`;
+    s+=`<circle cx="162" cy="96" r="3" fill="#4a1a6a"/><circle cx="172" cy="96" r="3" fill="#4a1a6a"/>`;
+    s+=`<circle cx="163" cy="95" r="1" fill="white"/><circle cx="173" cy="95" r="1" fill="white"/>`;
+    // beak
+    s+=`<polygon points="167,99 163,104 171,104" fill="#f9a825"/>`;
+    // graduation cap (she knows calendars!)
+    s+=`<rect x="158" y="86" width="18" height="5" rx="2" fill="#4a1a6a"/>`;
+    s+=`<rect x="162" y="81" width="10" height="6" rx="2" fill="#4a1a6a"/>`;
+    s+=`<line x1="176" y1="88" x2="180" y2="94" stroke="#f9a825" stroke-width="1.5"/>`;
+    s+=`<circle cx="180" cy="95" r="3" fill="#f9a825"/>`;
+    s+=`</g>`;
+  }
+
+  // cape (behind body)
+  if(hasCape){
+    s+=`<g class="cape">`;
+    s+=`<path d="M62 118 Q28 104 24 72 Q20 50 36 56 Q32 80 50 94 Q46 68 54 46 Q66 54 58 82 Q72 62 70 36 Q84 48 76 80 Q88 62 86 38 Q98 52 88 80" fill="#ce93d8" opacity=".9"/>`;
+    s+=`<path d="M138 118 Q172 104 176 72 Q180 50 164 56 Q168 80 150 94 Q154 68 146 46 Q134 54 142 82 Q128 62 130 36 Q116 48 124 80 Q112 62 114 38 Q102 52 112 80" fill="#ce93d8" opacity=".9"/>`;
+    // cape sparkles
+    [[30,60],[170,60],[28,80],[172,80]].forEach(([x,y],i)=>{
+      const c=['#f9a825','#e91e8c'][i%2];
+      s+=`<path d="M${x} ${y-4}L${x} ${y+4}M${x-4} ${y}L${x+4} ${y}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+    });
+    s+=`</g>`;
+  }
+
+  // DRESS
+  const dressColor = hasCape ? '#e91e8c' : '#f48fb1';
+  s+=`<path d="M58 140 Q40 190 60 200 L140 200 Q160 190 142 140 Q130 160 100 162 Q70 160 58 140 Z" fill="${dressColor}"/>`;
+  // dress layers
+  s+=`<path d="M62 155 Q100 168 138 155" fill="none" stroke="${hasCape?'#c2185b':'#e91e8c'}" stroke-width="3" stroke-linecap="round"/>`;
+  s+=`<path d="M55 170 Q100 186 145 170" fill="none" stroke="${hasCape?'#c2185b':'#e91e8c'}" stroke-width="3" stroke-linecap="round"/>`;
+  // dress gems
+  if(hasCape){
+    [[88,145],[100,142],[112,145]].forEach(([x,y])=>
+      s+=`<circle class="gem" cx="${x}" cy="${y}" r="4" fill="#fff9c4" opacity=".9"/>`);
+  }
+
+  // BODY
+  s+=`<ellipse cx="100" cy="128" rx="32" ry="18" fill="${dressColor}"/>`;
+  // waist
+  s+=`<ellipse cx="100" cy="128" rx="22" ry="8" fill="${hasCape?'#c2185b':'#e91e8c'}" opacity=".4"/>`;
+
+  // ARMS
+  s+=`<ellipse cx="62" cy="128" rx="12" ry="22" fill="#fce4ec" transform="rotate(-15 62 128)"/>`;
+  s+=`<ellipse cx="138" cy="128" rx="12" ry="22" fill="#fce4ec" transform="rotate(15 138 128)"/>`;
+
+  // SHOES
+  if(hasShoes){
+    s+=`<ellipse class="shoe" cx="82" cy="196" rx="16" ry="7" fill="#64b5f6"/>`;
+    s+=`<ellipse class="shoe" cx="118" cy="196" rx="16" ry="7" fill="#64b5f6" style="animation-delay:.3s"/>`;
+    // heel
+    s+=`<rect x="74" y="189" width="8" height="10" rx="3" fill="#42a5f5"/>`;
+    s+=`<rect x="118" y="189" width="8" height="10" rx="3" fill="#42a5f5"/>`;
+  }
+
+  // HEAD
+  s+=`<circle cx="100" cy="82" r="38" fill="#fce4ec"/>`;
+  // hair
+  s+=`<path d="M65 72 Q62 48 80 40 Q100 32 120 40 Q138 48 135 72" fill="#c8860a"/>`;
+  s+=`<path d="M65 72 Q55 90 58 112" fill="none" stroke="#c8860a" stroke-width="10" stroke-linecap="round"/>`;
+  s+=`<path d="M135 72 Q145 90 142 112" fill="none" stroke="#c8860a" stroke-width="10" stroke-linecap="round"/>`;
+  // hair detail
+  s+=`<path d="M68 60 Q100 28 132 60" fill="none" stroke="#a06000" stroke-width="2" opacity=".4"/>`;
+
+  // FACE
+  // eyes
+  s+=`<ellipse cx="86" cy="80" rx="10" ry="11" fill="white"/>`;
+  s+=`<ellipse cx="86" cy="81" rx="6.5" ry="7.5" fill="#4a1a6a"/>`;
+  s+=`<circle cx="88" cy="78" r="2.5" fill="white"/>`;
+  s+=`<path d="M77 72 Q86 68 95 72" fill="none" stroke="#4a1a6a" stroke-width="1.5" stroke-linecap="round"/>`;
+  s+=`<ellipse cx="114" cy="80" rx="10" ry="11" fill="white"/>`;
+  s+=`<ellipse cx="114" cy="81" rx="6.5" ry="7.5" fill="#4a1a6a"/>`;
+  s+=`<circle cx="116" cy="78" r="2.5" fill="white"/>`;
+  s+=`<path d="M105 72 Q114 68 123 72" fill="none" stroke="#4a1a6a" stroke-width="1.5" stroke-linecap="round"/>`;
+  // nose
+  s+=`<ellipse cx="100" cy="92" rx="4" ry="3" fill="#f8bbd0"/>`;
+  // smile
+  s+=`<path d="M88 100 Q100 110 112 100" fill="none" stroke="#e91e8c" stroke-width="2.5" stroke-linecap="round"/>`;
+  // cheeks
+  s+=`<ellipse cx="72" cy="92" rx="9" ry="6" fill="#f48fb1" opacity=".4"/>`;
+  s+=`<ellipse cx="128" cy="92" rx="9" ry="6" fill="#f48fb1" opacity=".4"/>`;
+
+  // CROWN
+  if(hasCrown){
+    s+=`<g class="crown">`;
+    s+=`<rect x="72" y="50" width="56" height="18" rx="4" fill="#f9a825"/>`;
+    s+=`<polygon points="72,50 80,34 88,50" fill="#f9a825"/>`;
+    s+=`<polygon points="88,50 100,30 112,50" fill="#f9a825"/>`;
+    s+=`<polygon points="112,50 120,34 128,50" fill="#f9a825"/>`;
+    // gems
+    [[80,46,'#e53935'],[100,42,'#1e88e5'],[120,46,'#52d9a0']].forEach(([x,y,c])=>
+      s+=`<circle class="gem" cx="${x}" cy="${y}" r="5" fill="${c}"/>`);
+    s+=`</g>`;
+  } else {
+    // simple hair band
+    s+=`<ellipse cx="100" cy="52" rx="30" ry="8" fill="#e91e8c" opacity=".5"/>`;
+  }
+
+  // WAND
+  if(hasWand){
+    s+=`<g class="wand">`;
+    s+=`<line x1="138" y1="148" x2="168" y2="112" stroke="#f9a825" stroke-width="3.5" stroke-linecap="round"/>`;
+    s+=`<g class="wand-star">`;
+    s+=`<path d="M165 105 l3 7 l7 0 l-5.5 4 l2 7 l-6.5-4 l-6.5 4 l2-7 l-5.5-4 l7 0 z" fill="#f9a825"/>`;
+    s+=`<path d="M165 105 l3 7 l7 0 l-5.5 4 l2 7 l-6.5-4 l-6.5 4 l2-7 l-5.5-4 l7 0 z" fill="white" opacity=".4"/>`;
+    s+=`</g></g>`;
+  }
+
+  // win stars
+  if(hasStars){
+    [[22,22],[178,22],[100,14],[44,54],[156,54]].forEach(([x,y],i)=>{
+      const c=['#f9a825','#e91e8c','#9c27b0','#64b5f6','#52d9a0'][i];
+      s+=`<circle cx="${x}" cy="${y}" r="5" fill="${c}" opacity=".9"/>`;
+      s+=`<path d="M${x} ${y-4}L${x} ${y+4}M${x-4} ${y}L${x+4} ${y}" stroke="white" stroke-width="1.5" stroke-linecap="round"/>`;
+    });
+  }
+
+  return s;
+}
+
+function renderPrincess(id,level){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=buildPrincess(level);
+}
+
+// ═══════════════════════════════════════════
+//  CALENDAR DATA
+// ═══════════════════════════════════════════
+const WEEKDAYS=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const WEEKDAY_EMOJI=['🏫','🏫','🌤️','🏫','🎉','🎈','💤'];
+const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MONTH_EMOJI=['❄️','💝','🌱','🌸','🌺','☀️','🏖️','🌻','🍂','🎃','⛄','🎄'];
+
+// ── QUESTION TYPES per level ──
+// week mode:  L1-3 = name, L4-6 = order  (what comes after/before?)
+// month mode: L1-3 = name, L4-6 = order
+// both: interleaved
+
+function getLevelConfig(l, mode){
+  // normalize level to 1-10
+  if(mode==='week'){
+    return l<=3 ? {type:'name',  data:'week'}
+                : l<=6 ? {type:'order', data:'week'}
+                : l<=8 ? {type:'name',  data:'week'}
+                : {type:'order', data:'week'};
+  } else if(mode==='month'){
+    return l<=3 ? {type:'name',  data:'month'}
+                : l<=6 ? {type:'order', data:'month'}
+                : l<=8 ? {type:'name',  data:'month'}
+                : {type:'order', data:'month'};
+  } else {
+    // both — alternate week/month each pair of levels
+    if(l<=2)  return {type:'name',  data:'week'};
+    if(l<=4)  return {type:'name',  data:'month'};
+    if(l<=6)  return {type:'order', data:'week'};
+    if(l<=8)  return {type:'order', data:'month'};
+    return    {type:'order', data: l%2===0?'month':'week'};
+  }
+}
+
+function getDiffLabel(cfg){
+  const labels={
+    'name-week':   {text:'Wochentag-Namen 📅', bg:'linear-gradient(135deg,#e91e8c,#c2185b)'},
+    'order-week':  {text:'Was kommt danach? 📅', bg:'linear-gradient(135deg,#9c27b0,#6a1b9a)'},
+    'name-month':  {text:'Monats-Namen 🗓️', bg:'linear-gradient(135deg,#1e88e5,#1565c0)'},
+    'order-month': {text:'Was kommt danach? 🗓️', bg:'linear-gradient(135deg,#00838f,#006064)'},
+  };
+  return labels[`${cfg.type}-${cfg.data}`];
+}
+
+const LEVEL_NAMES=[
+  '','Wochentag-Namen','Wochentag-Namen','Wochentag-Namen',
+  'Reihenfolge Wochentage','Reihenfolge Wochentage','Reihenfolge Wochentage',
+  'Monats-Namen','Monats-Namen','Reihenfolge Monate','Reihenfolge Monate'
+];
+
+// ═══════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════
+let score=0,level=1,streak=0,answered=false;
+let gameMode='week',turboMode=false,playerName='';
+const QPL=8;
+let questionInLevel=0,currentAnswer='',totalCorrect=0;
+let timerInterval=null,timerStart=0,timerDuration=12;
+
+const SPEECH_RIGHT=['Super! 🌟','Richtig! 👑','Toll! ✨','Wunderbar! 💫','Ja! Genial! 🌸','Fantastisch! 🎉'];
+const SPEECH_WRONG=['Fast! Nochmal! 💪','Schau nochmal! 👑','Versuch nochmal! 🌟','Du schaffst das! ✨'];
+const SPEECH_ASK=['Welcher Tag ist das? 📅','Was kommt danach? 🌟','Welcher Monat? 🗓️','Zeig dein Wissen! 👑','Such die Antwort! ✨'];
+const SPEECH_TIMEOUT=['Zeit! Nochmal! ⏱️','Ups, Zeit weg! ⏰','Schneller! ⚡'];
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function setStartMode(m){
+  gameMode=m;
+  ['Week','Month','Both'].forEach(x=>document.getElementById('startMode'+x).classList.toggle('active',m===x.toLowerCase()));
+}
+function setMode(m){
+  gameMode=m;
+  ['Week','Month','Both'].forEach(x=>document.getElementById('mode'+x).classList.toggle('active',m===x.toLowerCase()));
+  nextQuestion();
+}
+
+function startGame(){
+  playerName=document.getElementById('nameInput').value.trim()||'Kalender-Prinzessin';
+  turboMode=document.getElementById('turboToggle').checked;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('headerSub').textContent=`Hallo ${playerName}! Lerne Wochentage und Monate!`;
+  ['Week','Month','Both'].forEach(x=>document.getElementById('mode'+x).classList.toggle('active',gameMode===x.toLowerCase()));
+  if(turboMode) document.getElementById('timerSection').style.display='flex';
+  renderPrincess('mainSvg',1);
+  nextQuestion();
+}
+
+function setSpeech(msg){
+  const el=document.getElementById('speech');
+  el.style.animation='none';el.textContent=msg;
+  requestAnimationFrame(()=>el.style.animation='popIn .35s cubic-bezier(.34,1.56,.64,1)');
+}
+
+function generateQuestion(){
+  const cfg=getLevelConfig(level,gameMode);
+  const arr=cfg.data==='week'?WEEKDAYS:MONTHS;
+  const emoji=cfg.data==='week'?WEEKDAY_EMOJI:MONTH_EMOJI;
+
+  if(cfg.type==='name'){
+    // Show emoji + ask which day/month name
+    const idx=Math.floor(Math.random()*arr.length);
+    const correct=arr[idx];
+    const correctEmoji=emoji[idx];
+    // wrong choices
+    const wrong=shuffle(arr.filter(d=>d!==correct)).slice(0,3);
+    const choices=shuffle([correct,...wrong]);
+    const label=cfg.data==='week'?'Welcher Wochentag passt zu diesem Emoji?':'Welcher Monat passt zu diesem Emoji?';
+    return{type:'name',correct,choices,emoji:correctEmoji,label,cfg};
+  } else {
+    // order: what comes after X? or before X?
+    const before=Math.random()<.5;
+    const idx=before
+      ? Math.floor(Math.random()*(arr.length-1))+1  // skip first if "before"
+      : Math.floor(Math.random()*(arr.length-1));    // skip last if "after"
+    const refDay=arr[idx];
+    const correct=before?arr[idx-1]:arr[(idx+1)%arr.length];
+    const wrong=shuffle(arr.filter(d=>d!==correct&&d!==refDay)).slice(0,3);
+    const choices=shuffle([correct,...wrong]);
+    const label=before
+      ? `Was kommt VOR dem ${cfg.data==='week'?'Tag':'Monat'} "${refDay}"?`
+      : `Was kommt NACH dem ${cfg.data==='week'?'Tag':'Monat'} "${refDay}"?`;
+    const refEmoji=emoji[idx];
+    return{type:'order',correct,choices,emoji:refEmoji,label,ref:refDay,before,cfg};
+  }
+}
+
+function nextQuestion(){
+  answered=false;
+  const q=generateQuestion();
+  currentAnswer=q.correct;
+
+  const cfg=q.cfg;
+  const diff=getDiffLabel(cfg);
+  document.getElementById('diffBadge').textContent=diff.text;
+  document.getElementById('diffBadge').style.background=diff.bg;
+  document.getElementById('questionEmoji').textContent=q.emoji;
+  document.getElementById('questionText').textContent=q.label;
+  setSpeech(SPEECH_ASK[Math.floor(Math.random()*SPEECH_ASK.length)]);
+
+  // layout: 4 choices in 2 cols for names, 2 cols for order too but wider
+  const cont=document.getElementById('answers');
+  cont.innerHTML='';
+  cont.className='answers cols2';
+  // if long words, switch to 1 col
+  const maxLen=Math.max(...q.choices.map(c=>c.length));
+  if(maxLen>10) cont.className='answers cols1';
+
+  q.choices.forEach(c=>{
+    const btn=document.createElement('button');btn.className='ans-btn';btn.textContent=c;
+    btn.onclick=()=>handleAnswer(c,btn);cont.appendChild(btn);
+  });
+
+  document.getElementById('ltFill').style.width=(questionInLevel/QPL*100)+'%';
+  document.getElementById('ltProgress').textContent=`${questionInLevel} / ${QPL}`;
+  document.getElementById('ltLabel').textContent=`Level ${level} – ${LEVEL_NAMES[Math.min(level,10)]||''}`;
+
+  if(turboMode)startTimer();
+}
+
+function handleAnswer(val,btn){
+  if(answered)return;answered=true;
+  let elapsed=0;if(turboMode)elapsed=stopTimer();
+  if(val===currentAnswer){
+    streak++;totalCorrect++;
+    const pts=turboMode?calcPoints(elapsed):(10+(streak>1?streak*2:0));
+    score+=pts;questionInLevel++;
+    btn.classList.add('correct');
+    const bonus=turboMode&&elapsed<3?' ⚡ Blitz!':turboMode&&elapsed<5?' 🚀 Schnell!':'';
+    setSpeech(SPEECH_RIGHT[Math.floor(Math.random()*SPEECH_RIGHT.length)]+bonus);
+    flashPrincess('happy');spawnConfetti(28);
+    document.getElementById('score').textContent=score;
+    document.getElementById('streakDisp').textContent=streak;
+    if(streak>=3) document.getElementById('streakRow').textContent=`🔥 ${streak}x Streak!`;
+    else if(streak>0) document.getElementById('streakRow').textContent=`✨ ${streak} richtig!`;
+    if(questionInLevel>=QPL)setTimeout(doLevelUp,700);else setTimeout(nextQuestion,950);
+  } else {
+    streak=0;document.getElementById('streakDisp').textContent=0;
+    document.getElementById('streakRow').textContent='';
+    btn.classList.add('wrong');
+    setSpeech(SPEECH_WRONG[Math.floor(Math.random()*SPEECH_WRONG.length)]);
+    flashPrincess('sad');
+    if(turboMode)startTimer();
+    setTimeout(()=>{btn.classList.remove('wrong');answered=false;},650);
+  }
+}
+
+// TIMER
+function startTimer(){
+  clearInterval(timerInterval);timerStart=Date.now();
+  const fill=document.getElementById('timerFill'),lbl=document.getElementById('timerLbl');
+  fill.style.transition='none';fill.style.width='100%';fill.classList.remove('warn');
+  timerInterval=setInterval(()=>{
+    const el=(Date.now()-timerStart)/1000;
+    const pct=Math.max(0,100-el/timerDuration*100);
+    fill.style.transition='width .1s linear';fill.style.width=pct+'%';
+    lbl.textContent=`⚡ ${Math.ceil(timerDuration-el)}s`;
+    if(pct<30)fill.classList.add('warn');
+    if(el>=timerDuration){clearInterval(timerInterval);handleTimeout();}
+  },100);
+}
+function stopTimer(){clearInterval(timerInterval);return(Date.now()-timerStart)/1000;}
+function handleTimeout(){
+  if(answered)return;answered=true;streak=0;score+=2;questionInLevel++;
+  document.getElementById('score').textContent=score;
+  document.getElementById('streakDisp').textContent=0;
+  document.getElementById('streakRow').textContent='';
+  setSpeech(SPEECH_TIMEOUT[Math.floor(Math.random()*SPEECH_TIMEOUT.length)]);
+  document.getElementById('timerFill').style.width='0%';
+  document.getElementById('timerLbl').textContent='';
+  if(questionInLevel>=QPL)setTimeout(doLevelUp,900);else setTimeout(nextQuestion,900);
+}
+function calcPoints(el){return el<3?25:el<5?20:el<7?15:10;}
+
+function flashPrincess(mood){
+  const w=document.getElementById('princessWrap');
+  if(mood==='happy'){
+    w.style.animation='princessDance .8s ease-in-out';
+    w.style.filter='drop-shadow(0 0 28px rgba(249,168,37,.9))';
+    setTimeout(()=>{w.style.animation='princessFloat 3s ease-in-out infinite';w.style.filter='drop-shadow(0 6px 20px rgba(233,30,140,.3))';},900);
+  } else {
+    w.style.animation='princessSad .4s ease';
+    w.style.filter='drop-shadow(0 0 16px rgba(239,68,68,.5))';
+    setTimeout(()=>{w.style.animation='princessFloat 3s ease-in-out infinite';w.style.filter='drop-shadow(0 6px 20px rgba(233,30,140,.3))';},500);
+  }
+}
+
+function doLevelUp(){
+  clearInterval(timerInterval);
+  const next=level+1;
+  if(next>10){showWin();return;}
+  level=next;questionInLevel=0;
+  document.getElementById('levelDisp').textContent=level;
+  document.getElementById('upgradeLabel').textContent=UPGRADES[level-1].name;
+  renderPrincess('mainSvg',level);renderPrincess('luSvg',level);
+  document.getElementById('luTitle').textContent=`👑 Level ${level}!`;
+  document.getElementById('luUpgrade').textContent=`✨ Neu: ${UPGRADES[level-1].name}`;
+  document.getElementById('luSub').textContent=UPGRADES[level-1].desc;
+  document.getElementById('luOv').classList.add('show');
+  spawnConfetti(70);
+}
+function closeLevelUp(){
+  document.getElementById('luOv').classList.remove('show');
+  nextQuestion();
+}
+
+function showWin(){
+  clearInterval(timerInterval);
+  const now=new Date();
+  document.getElementById('dipDate').textContent=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('dipName').textContent=playerName;
+  document.getElementById('winScore').textContent=score;
+  document.getElementById('winCorrect').textContent=totalCorrect;
+  renderPrincess('dipSvg',10);
+  document.getElementById('winOv').classList.add('show');
+  spawnConfetti(110);
+}
+
+async function downloadPDF(){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;left:-9999px;top:0;width:540px;background:white;font-family:"Fredoka One",cursive;';
+  el.innerHTML=`
+    <div style="padding:32px;text-align:center;border:8px solid transparent;
+      background:linear-gradient(white,white) padding-box,
+      linear-gradient(135deg,#f9a825,#e91e8c,#9c27b0,#64b5f6,#f9a825) border-box;border-radius:20px;">
+      <div style="font-size:2rem;margin-bottom:6px">👑 📅 👑</div>
+      <div style="font-size:1.5rem;color:#e91e8c;margin-bottom:3px">👑 Kalender-Urkunde 📅</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;color:#9c27b0;margin-bottom:6px">verliehen an</div>
+      <div style="font-size:2.8rem;color:#e91e8c;line-height:1.1;margin-bottom:10px">${playerName}</div>
+      <div style="font-size:4.5rem;line-height:1;margin:8px 0">👸</div>
+      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:10px 0;font-size:.85rem;color:#9c27b0;font-family:'Nunito',sans-serif;font-weight:800">
+        ${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<span style="background:#fce4ec;padding:3px 8px;border-radius:8px">${d}</span>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:6px 0 12px;font-size:.75rem;color:#9c27b0;font-family:'Nunito',sans-serif;font-weight:800">
+        ${['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'].map(m=>`<span style="background:#f3e5f5;padding:2px 6px;border-radius:6px">${m}</span>`).join('')}
+      </div>
+      <div style="width:80%;height:2px;background:linear-gradient(90deg,transparent,#f48fb1,transparent);margin:12px auto"></div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:#4a1a6a;line-height:1.8;margin:10px 0">
+        hat alle Wochentage und Monate gelernt,<br>ihr Schloss vollständig erbaut<br>und bewiesen: Wissen ist Magie! 👑✨
+      </div>
+      <div style="display:flex;justify-content:center;gap:14px;margin:16px 0">
+        <div style="background:#fce4ec;border-radius:12px;padding:10px 22px">
+          <div style="font-size:2rem;color:#e91e8c">${score}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:.65rem;color:#9c27b0;font-weight:800">PUNKTE</div>
+        </div>
+        <div style="background:#fce4ec;border-radius:12px;padding:10px 22px">
+          <div style="font-size:2rem;color:#e91e8c">${totalCorrect}</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:.65rem;color:#9c27b0;font-weight:800">RICHTIG</div>
+        </div>
+        ${turboMode?`<div style="background:#fce4ec;border-radius:12px;padding:10px 16px"><div style="font-size:1.4rem">⚡</div><div style="font-family:'Nunito',sans-serif;font-size:.65rem;color:#9c27b0;font-weight:800">TURBO</div></div>`:''}
+      </div>
+      <div style="width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#f9a825,#e65100);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:4px auto 10px;border:3px solid white;box-shadow:0 4px 14px rgba(249,168,37,.4)">🏆</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:.75rem;color:#9c27b0;margin-top:8px">${dateStr}</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:.7rem;color:#f48fb1;margin-top:4px">👑 Prinzessin Kalender-Zauber</div>
+    </div>`;
+  document.body.appendChild(el);
+  try{
+    const canvas=await html2canvas(el.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+    document.body.removeChild(el);
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,H=297,imgW=W-20,imgH=canvas.height*(imgW/canvas.width);
+    doc.addImage(canvas.toDataURL('image/png'),'PNG',10,Math.max(10,(H-imgH)/2),imgW,imgH);
+    doc.save(`Urkunde_${playerName.replace(/\s+/g,'_')}_Kalender.pdf`);
+  }catch(e){document.body.removeChild(el);alert('Fehler. Nochmal versuchen.');console.error(e);}
+}
+
+function restartGame(){
+  clearInterval(timerInterval);
+  score=0;level=1;streak=0;answered=false;questionInLevel=0;totalCorrect=0;
+  document.getElementById('score').textContent=0;
+  document.getElementById('levelDisp').textContent=1;
+  document.getElementById('streakDisp').textContent=0;
+  document.getElementById('streakRow').textContent='';
+  document.getElementById('upgradeLabel').textContent=UPGRADES[0].name;
+  document.getElementById('ltFill').style.width='0%';
+  document.getElementById('timerFill').style.width='100%';
+  document.getElementById('timerLbl').textContent='';
+  document.getElementById('winOv').classList.remove('show');
+  document.getElementById('startScreen').classList.remove('hidden');
+}
+
+// CONFETTI
+const CC=['#e91e8c','#9c27b0','#f9a825','#64b5f6','#52d9a0','#f48fb1','#ce93d8'];
+function spawnConfetti(n=30){
+  const w=document.getElementById('confetti');
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='cp';const sz=6+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*12-5}%;width:${sz}px;height:${sz}px;background:${CC[Math.floor(Math.random()*CC.length)]};border-radius:${Math.random()<.5?'50%':'3px'};--fd:${.8+Math.random()*1.5}s;--dl:${Math.random()*.4}s;`;
+    w.appendChild(p);setTimeout(()=>p.remove(),2500);
+  }
+}
+
+// SPARKLE BG
+(function(){
+  const bg=document.getElementById('sparkleBg');
+  const sp=['✨','💫','⭐','🌟','💎'];
+  for(let i=0;i<18;i++){
+    const el=document.createElement('div');el.className='sp';
+    el.textContent=sp[Math.floor(Math.random()*sp.length)];
+    el.style.cssText=`left:${Math.random()*95}%;top:${Math.random()*90}%;--ss:${.8+Math.random()*.8}rem;--sd:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+    bg.appendChild(el);
+  }
+})();
+</script>
+</body>
+</html>
