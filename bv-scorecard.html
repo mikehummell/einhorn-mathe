@@ -366,6 +366,26 @@ function App() {
         )}
       </div>
 
+      {/* ── AUFWAND ── */}
+      <div style={S.groupCard('rgba(167,139,250,0.3)')}>
+        <SectionHeader label="Aufwand" accent="rgba(167,139,250,0.15)" textColor="var(--purple)" />
+        <div style={{...S.groupBody, borderTop:'1px solid rgba(167,139,250,0.2)'}}>
+          <div style={{...S.fieldLabel, marginBottom:'8px'}}>T-Shirt-Grösse</div>
+          <div style={{display:'flex', gap:'8px'}}>
+            {TSHIRTS.map(t => {
+              const sel = aufwand === t.val;
+              return (
+                <button key={t.val} style={S.tshirtBtn(sel)} onClick={()=>setAufwand(a=>a===t.val?null:t.val)}>
+                  <span style={{fontFamily:'var(--mono)', fontSize:'20px', fontWeight:600,
+                    color: sel?'var(--purple)':'var(--muted)', display:'block', marginBottom:'2px'}}>{t.label}</span>
+                  <span style={{fontSize:'10px', color: sel?'var(--purple)':'var(--muted)'}}>{t.range}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* ── CONFIDENCE ── */}
       <div style={S.groupCard('rgba(255,255,255,0.1)')}>
         <SectionHeader label="Confidence der Annahmen — gilt für alle Angaben" accent="rgba(255,255,255,0.06)" textColor="var(--muted)" />
@@ -389,26 +409,6 @@ function App() {
             ))}
           </div>
           {confIdx < 0 && <div style={{textAlign:'center', fontSize:'11px', color:'var(--muted)', marginTop:'6px', fontStyle:'italic'}}>nicht gesetzt — Schieber nach rechts bewegen</div>}
-        </div>
-      </div>
-
-      {/* ── AUFWAND ── */}
-      <div style={S.groupCard('rgba(167,139,250,0.3)')}>
-        <SectionHeader label="Aufwand" accent="rgba(167,139,250,0.15)" textColor="var(--purple)" />
-        <div style={{...S.groupBody, borderTop:'1px solid rgba(167,139,250,0.2)'}}>
-          <div style={{...S.fieldLabel, marginBottom:'8px'}}>T-Shirt-Grösse</div>
-          <div style={{display:'flex', gap:'8px'}}>
-            {TSHIRTS.map(t => {
-              const sel = aufwand === t.val;
-              return (
-                <button key={t.val} style={S.tshirtBtn(sel)} onClick={()=>setAufwand(a=>a===t.val?null:t.val)}>
-                  <span style={{fontFamily:'var(--mono)', fontSize:'20px', fontWeight:600,
-                    color: sel?'var(--purple)':'var(--muted)', display:'block', marginBottom:'2px'}}>{t.label}</span>
-                  <span style={{fontSize:'10px', color: sel?'var(--purple)':'var(--muted)'}}>{t.range}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
 
